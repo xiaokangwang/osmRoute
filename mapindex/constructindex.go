@@ -41,7 +41,7 @@ func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 		{
 			for _, v := range objWay.Nodes.FeatureIDs() {
 				{
-					objid := MapElementID2Refs{
+					objid := MapFeatureID2Refs{
 						IDElem: v,
 						Refs:   osm.FeatureIDs{objWay.FeatureID()},
 					}
@@ -60,7 +60,7 @@ func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 		{
 			for _, v := range objRelation.Members.FeatureIDs() {
 				{
-					objid := MapElementID2Refs{
+					objid := MapFeatureID2Refs{
 						IDElem: v,
 						Refs:   osm.FeatureIDs{objRelation.FeatureID()},
 					}

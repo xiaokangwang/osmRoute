@@ -17,7 +17,7 @@ func (m *Map) ConstructIndex(path string) error {
 		return err
 	}
 	Scanner := osmpbf.New(context.Background(), file, 4)
-	for {
+	for Scanner.Scan() {
 		object := Scanner.Object()
 		fsb := Scanner.FullyScannedBytes()
 		indexs := ConstructIndexForObject(object, fsb)
@@ -44,9 +44,6 @@ func (m *Map) ConstructIndex(path string) error {
 			panic(err)
 		}
 		tx.Discard()
-		if !Scanner.Scan() {
-			break
-		}
 	}
 	return nil
 }

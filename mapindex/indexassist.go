@@ -1,9 +1,9 @@
 package mapindex
 
 import (
+	"fmt"
 	"github.com/paulmach/osm"
 	"modernc.org/sortutil"
-	"strconv"
 	"strings"
 )
 
@@ -13,7 +13,7 @@ type MapID2ItemEntry struct {
 }
 
 func (m MapID2ItemEntry) ToIndexKey() string {
-	return "Index_MapID2ItemEntry_" + m.ID.String()
+	return "I_A_" + m.ID.String()
 }
 
 func (m MapID2ItemEntry) Install(oldVal MapIndex) MapIndex {
@@ -26,10 +26,13 @@ type MapFeatureID2CurrentObjectIDEntry struct {
 }
 
 func (m MapFeatureID2CurrentObjectIDEntry) ToIndexKey() string {
-	return "Index_MapElementID2CurrentObjectIDEntry_" + m.IDFeat.String()
+	return "I_B_" + m.IDFeat.String()
 }
 
 func (m MapFeatureID2CurrentObjectIDEntry) Install(oldVal MapIndex) MapIndex {
+	if oldVal == nil {
+		return m
+	}
 	if oldVal.(MapFeatureID2CurrentObjectIDEntry).ID.Version() > m.ID.Version() {
 		return oldVal
 	}
@@ -44,7 +47,7 @@ type MapRegion2IDEntry struct {
 }
 
 func (m MapRegion2IDEntry) ToIndexKey() string {
-	return "Index_MapRegion2IDEntry_" + InterlacedString(FloatToConstantLengthFloat(m.Lat), FloatToConstantLengthFloat(m.Lon))
+	return "I_C_" + InterlacedString(FloatToConstantLengthFloat(m.Lat), FloatToConstantLengthFloat(m.Lon))
 }
 
 func (m MapRegion2IDEntry) Install(oldVal MapIndex) MapIndex {
@@ -59,19 +62,19 @@ func (m MapRegion2IDEntry) Install(oldVal MapIndex) MapIndex {
 	return ety
 }
 
-type MapElementID2Refs struct {
+type MapFeatureID2Refs struct {
 	IDElem osm.FeatureID
 
 	Refs osm.FeatureIDs
 }
 
-func (m MapElementID2Refs) ToIndexKey() string {
-	return "Index_MapElementID2Refs_" + m.IDElem.String()
+func (m MapFeatureID2Refs) ToIndexKey() string {
+	return "I_D_" + m.IDElem.String()
 }
 
-func (m MapElementID2Refs) Install(oldVal MapIndex) MapIndex {
+func (m MapFeatureID2Refs) Install(oldVal MapIndex) MapIndex {
 	if oldVal != nil {
-		m.Refs = append(m.Refs, oldVal.(MapElementID2Refs).Refs...)
+		m.Refs = append(m.Refs, oldVal.(MapFeatureID2Refs).Refs...)
 	}
 	sortutil.Dedupe(FeatureIDSlice(m.Refs))
 	return m
@@ -98,7 +101,9 @@ func InterlacedString(a, b string) string {
 }
 
 func FloatToConstantLengthFloat(input float64) string {
-	return strconv.FormatFloat(input, 'f', 32, 64)
+	strv := fmt.Sprintf("%0+16.6f", input)
+
+	return strv
 }
 
 type ObjectIDSlice []osm.ObjectID
