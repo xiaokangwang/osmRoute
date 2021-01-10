@@ -2,6 +2,7 @@ package mapindex
 
 import (
 	"github.com/paulmach/osm"
+	"modernc.org/sortutil"
 	"strconv"
 	"strings"
 )
@@ -36,9 +37,10 @@ func (m MapElementID2CurrentObjectIDEntry) Install(oldVal MapIndex) MapIndex {
 }
 
 type MapRegion2IDEntry struct {
-	IDs osm.ObjectIDs
-	Lat float64
-	Lon float64
+	IDs  osm.ObjectIDs
+	EIDs osm.ElementIDs
+	Lat  float64
+	Lon  float64
 }
 
 func (m MapRegion2IDEntry) ToIndexKey() string {
@@ -46,9 +48,33 @@ func (m MapRegion2IDEntry) ToIndexKey() string {
 }
 
 func (m MapRegion2IDEntry) Install(oldVal MapIndex) MapIndex {
-	ety := oldVal.(MapRegion2IDEntry)
+	ety := m
+	if oldVal != nil {
+		ety = oldVal.(MapRegion2IDEntry)
+	}
 	ety.IDs = append(ety.IDs, m.IDs...)
+	sortutil.Dedupe(ObjectIDSlice(ety.IDs))
+	ety.EIDs = append(ety.EIDs, m.EIDs...)
+	sortutil.Dedupe(ElementIDSlice(ety.EIDs))
 	return ety
+}
+
+type MapElementID2Refs struct {
+	IDElem osm.ElementID
+
+	Refs osm.ElementIDs
+}
+
+func (m MapElementID2Refs) ToIndexKey() string {
+	return "Index_MapElementID2Refs_" + m.IDElem.String()
+}
+
+func (m MapElementID2Refs) Install(oldVal MapIndex) MapIndex {
+	if oldVal != nil {
+		m.Refs = append(m.Refs, oldVal.(MapElementID2Refs).Refs...)
+	}
+	sortutil.Dedupe(ElementIDSlice(m.Refs))
+	return m
 }
 
 type MapIndex interface {
@@ -74,3 +100,19 @@ func InterlacedString(a, b string) string {
 func FloatToConstantLengthFloat(input float64) string {
 	return strconv.FormatFloat(input, 'f', 32, 64)
 }
+
+type ObjectIDSlice []osm.ObjectID
+
+func (p ObjectIDSlice) Len() int { return len(p) }
+
+func (p ObjectIDSlice) Less(i, j int) bool { return p[i] < p[j] }
+
+func (p ObjectIDSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+
+type ElementIDSlice []osm.ElementID
+
+func (p ElementIDSlice) Len() int { return len(p) }
+
+func (p ElementIDSlice) Less(i, j int) bool { return p[i] < p[j] }
+
+func (p ElementIDSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
