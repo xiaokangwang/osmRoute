@@ -44,7 +44,11 @@ func (m *Map) ConstructIndex(path string) error {
 			panic(err)
 		}
 		tx.Discard()
+		if !Scanner.Scan() {
+			break
+		}
 	}
+	return nil
 }
 
 func NewMap(db *badger.DB) *Map {
