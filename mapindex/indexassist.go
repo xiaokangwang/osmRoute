@@ -20,17 +20,17 @@ func (m MapID2ItemEntry) Install(oldVal MapIndex) MapIndex {
 	return m
 }
 
-type MapElementID2CurrentObjectIDEntry struct {
+type MapFeatureID2CurrentObjectIDEntry struct {
 	ID     osm.ObjectID
-	IDElem osm.ElementID
+	IDFeat osm.FeatureID
 }
 
-func (m MapElementID2CurrentObjectIDEntry) ToIndexKey() string {
-	return "Index_MapElementID2CurrentObjectIDEntry_" + m.IDElem.String()
+func (m MapFeatureID2CurrentObjectIDEntry) ToIndexKey() string {
+	return "Index_MapElementID2CurrentObjectIDEntry_" + m.IDFeat.String()
 }
 
-func (m MapElementID2CurrentObjectIDEntry) Install(oldVal MapIndex) MapIndex {
-	if oldVal.(MapElementID2CurrentObjectIDEntry).ID.Version() > m.ID.Version() {
+func (m MapFeatureID2CurrentObjectIDEntry) Install(oldVal MapIndex) MapIndex {
+	if oldVal.(MapFeatureID2CurrentObjectIDEntry).ID.Version() > m.ID.Version() {
 		return oldVal
 	}
 	return m
@@ -38,7 +38,7 @@ func (m MapElementID2CurrentObjectIDEntry) Install(oldVal MapIndex) MapIndex {
 
 type MapRegion2IDEntry struct {
 	IDs  osm.ObjectIDs
-	EIDs osm.ElementIDs
+	FIDs osm.FeatureIDs
 	Lat  float64
 	Lon  float64
 }
@@ -54,15 +54,15 @@ func (m MapRegion2IDEntry) Install(oldVal MapIndex) MapIndex {
 	}
 	ety.IDs = append(ety.IDs, m.IDs...)
 	sortutil.Dedupe(ObjectIDSlice(ety.IDs))
-	ety.EIDs = append(ety.EIDs, m.EIDs...)
-	sortutil.Dedupe(ElementIDSlice(ety.EIDs))
+	ety.FIDs = append(ety.FIDs, m.FIDs...)
+	sortutil.Dedupe(FeatureIDSlice(ety.FIDs))
 	return ety
 }
 
 type MapElementID2Refs struct {
-	IDElem osm.ElementID
+	IDElem osm.FeatureID
 
-	Refs osm.ElementIDs
+	Refs osm.FeatureIDs
 }
 
 func (m MapElementID2Refs) ToIndexKey() string {
@@ -73,7 +73,7 @@ func (m MapElementID2Refs) Install(oldVal MapIndex) MapIndex {
 	if oldVal != nil {
 		m.Refs = append(m.Refs, oldVal.(MapElementID2Refs).Refs...)
 	}
-	sortutil.Dedupe(ElementIDSlice(m.Refs))
+	sortutil.Dedupe(FeatureIDSlice(m.Refs))
 	return m
 }
 
@@ -109,10 +109,10 @@ func (p ObjectIDSlice) Less(i, j int) bool { return p[i] < p[j] }
 
 func (p ObjectIDSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
 
-type ElementIDSlice []osm.ElementID
+type FeatureIDSlice []osm.FeatureID
 
-func (p ElementIDSlice) Len() int { return len(p) }
+func (p FeatureIDSlice) Len() int { return len(p) }
 
-func (p ElementIDSlice) Less(i, j int) bool { return p[i] < p[j] }
+func (p FeatureIDSlice) Less(i, j int) bool { return p[i] < p[j] }
 
-func (p ElementIDSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+func (p FeatureIDSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
