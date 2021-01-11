@@ -13,6 +13,14 @@ type MapCtx struct {
 	mapFileLock *sync.Mutex
 }
 
+func NewMapCtx(maps mapindex.Map, mapFile *os.File) *MapCtx {
+	return &MapCtx{
+		Map:         maps,
+		mapFile:     mapFile,
+		mapFileLock: &sync.Mutex{},
+	}
+}
+
 func (c MapCtx) GetNodeWithInterconnection(Lat, Lon float64, spec ConnectionSpec) []Node {
 	var nodes []Node
 	_, feaIDs := c.ScanRegion(Lat, Lon, 4)
