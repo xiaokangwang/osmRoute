@@ -24,22 +24,23 @@ func NewMapCtx(maps mapindex.Map, mapFile *os.File) *MapCtx {
 }
 
 func (c MapCtx) GetNodeWithInterconnection(Lat, Lon float64, spec ConnectionSpec) []Node {
-	var nodes []Node
+	var feaIDs osm.FeatureIDs
 	var acceptedNodes []Node
-	_, feaIDs, _ := c.ScanRegion(Lat, Lon, 3)
-	for _, v := range feaIDs {
-		node := (*c.ResolveInfoFromID(v.String())).(*osm.Node)
-		absNode := c.GetNodeFromOSMNode(node)
-		nodes = append(nodes, absNode)
-	}
+	_, _, feaG := c.ScanRegion(Lat, Lon, 3)
 
-	sort.Sort(NodeDistanceSlice{
-		nodes:     nodes,
+	sort.Sort(NodeGDistanceSlice{
+		nodes:     feaG,
 		OriginLat: Lat,
 		OriginLon: Lon,
 	})
 
-	for _, absNode := range nodes {
+	for _, v := range feaG {
+		feaIDs = append(feaIDs, v.FeatureIDs...)
+	}
+
+	for _, absNode := range feaIDs {
+		node := (*c.ResolveInfoFromID(absNode.String())).(*osm.Node)
+		absNode := c.GetNodeFromOSMNode(node)
 		conn := absNode.FindConnection(spec)
 		if conn != nil && len(conn) >= 1 {
 			acceptedNodes = append(acceptedNodes, absNode)
@@ -199,3 +200,23 @@ func (p NodeDistanceSlice) Less(i, j int) bool {
 }
 
 func (p NodeDistanceSlice) Swap(i, j int) { p.nodes[i], p.nodes[j] = p.nodes[j], p.nodes[i] }
+
+type NodeGDistanceSlice struct {
+	nodes     []mapindex.FeatureIDWithLocation
+	OriginLat float64
+	OriginLon float64
+}
+
+func (p NodeGDistanceSlice) Len() int { return len(p.nodes) }
+
+func (p NodeGDistanceSlice) Less(i, j int) bool {
+	iLon := p.nodes[i].Lon
+	iLat := p.nodes[i].Lat
+
+	jLon := p.nodes[j].Lon
+	jLat := p.nodes[j].Lat
+
+	return util.GPStoMeter(iLon, iLat, p.OriginLon, p.OriginLat) < util.GPStoMeter(jLon, jLat, p.OriginLon, p.OriginLat)
+}
+
+func (p NodeGDistanceSlice) Swap(i, j int) { p.nodes[i], p.nodes[j] = p.nodes[j], p.nodes[i] }
