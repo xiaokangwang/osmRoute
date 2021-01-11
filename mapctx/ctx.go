@@ -171,7 +171,8 @@ func (c ConnectionImpl) To() Node {
 }
 
 func (c ConnectionImpl) GetCost() float64 {
-	panic("implement me")
+
+	return util.GPStoMeter(c.from.(*NodeImpl).Lat, c.from.(*NodeImpl).Lon, c.to.(*NodeImpl).Lat, c.to.(*NodeImpl).Lon)
 }
 
 func (c *MapCtx) NewConnection(from, to *osm.Node) Connection {
