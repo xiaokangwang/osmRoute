@@ -3,6 +3,7 @@ package mapindex
 import (
 	"context"
 	"github.com/dgraph-io/badger/v2"
+	"github.com/fxamacker/cbor"
 	"github.com/paulmach/osm"
 	"github.com/paulmach/osm/osmpbf"
 	"io"
@@ -27,6 +28,39 @@ func (m Map) GetFeatureByID(FeatureID string, file *os.File) *osm.Object {
 		return nil
 	}
 	indexEV := indexEntry.(MapFeatureID2CurrentObjectIDEntry)
+
+	if indexEV.CachedData != nil && len(indexEV.CachedData) != 0 {
+		var objw osm.Object
+		switch indexEV.IDFeat.Type() {
+		case osm.TypeNode:
+			var node osm.Node
+			err := cbor.Unmarshal(indexEV.CachedData, &node)
+			if err != nil {
+				panic(err)
+			}
+			s := &node
+			objw = s
+		case osm.TypeWay:
+			var way osm.Way
+			err := cbor.Unmarshal(indexEV.CachedData, &way)
+			if err != nil {
+				panic(err)
+			}
+			s := &way
+			objw = s
+
+		case osm.TypeRelation:
+			var rela osm.Relation
+			err := cbor.Unmarshal(indexEV.CachedData, &rela)
+			if err != nil {
+				panic(err)
+			}
+			s := &rela
+			objw = s
+		}
+		return &objw
+	}
+
 	_, err := file.Seek(indexEV.SkipLength, io.SeekStart)
 	if err != nil {
 		return nil
@@ -42,6 +76,7 @@ func (m Map) GetFeatureByID(FeatureID string, file *os.File) *osm.Object {
 			objNode := object.(*osm.Node)
 
 			feaid = objNode.FeatureID()
+
 		case osm.TypeWay:
 			objWay := object.(*osm.Way)
 
@@ -56,6 +91,54 @@ func (m Map) GetFeatureByID(FeatureID string, file *os.File) *osm.Object {
 		m.objCache.Set(feaid.String(), &object, time.Second*30)
 
 		if object.ObjectID() == indexEV.ID {
+			var cacheByte []byte
+
+			switch object.ObjectID().Type() {
+			case osm.TypeNode:
+				objNode := object.(*osm.Node)
+
+				byte, err := cbor.Marshal(*objNode, cbor.CanonicalEncOptions())
+				if err != nil {
+					panic(err)
+				}
+				cacheByte = byte
+			case osm.TypeWay:
+				objWay := object.(*osm.Way)
+
+				byte, err := cbor.Marshal(*objWay, cbor.CanonicalEncOptions())
+				if err != nil {
+					panic(err)
+				}
+				cacheByte = byte
+			case osm.TypeRelation:
+				objRelation := object.(*osm.Relation)
+
+				byte, err := cbor.Marshal(*objRelation, cbor.CanonicalEncOptions())
+				if err != nil {
+					panic(err)
+				}
+				cacheByte = byte
+			default:
+				panic("Unexpected Type")
+			}
+
+			tx := m.db.NewTransaction(true)
+
+			indexEV.CachedData = cacheByte
+
+			indexEVWriteback, err := cbor.Marshal(indexEV, cbor.CanonicalEncOptions())
+			if err != nil {
+				panic(err)
+			}
+			err = tx.Set([]byte(indexEV.ToIndexKey()), indexEVWriteback)
+			if err != nil {
+				panic(err)
+			}
+			err = tx.Commit()
+			if err != nil {
+				panic(err)
+			}
+			tx.Discard()
 			retObj := Scanner.Object()
 			return &retObj
 		}

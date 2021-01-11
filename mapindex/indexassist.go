@@ -24,6 +24,8 @@ type MapFeatureID2CurrentObjectIDEntry struct {
 	ID         osm.ObjectID
 	SkipLength int64
 
+	CachedData []byte
+
 	IDFeat osm.FeatureID
 }
 
