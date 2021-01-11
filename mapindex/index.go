@@ -3,12 +3,15 @@ package mapindex
 import (
 	"context"
 	"github.com/dgraph-io/badger/v2"
+	"github.com/patrickmn/go-cache"
 	"github.com/paulmach/osm/osmpbf"
 	"os"
+	"time"
 )
 
 type Map struct {
-	db *badger.DB
+	db       *badger.DB
+	objCache *cache.Cache
 }
 
 func (m *Map) ConstructIndex(path string) error {
@@ -50,5 +53,5 @@ func (m *Map) ConstructIndex(path string) error {
 }
 
 func NewMap(db *badger.DB) *Map {
-	return &Map{db: db}
+	return &Map{db: db, objCache: cache.New(time.Second*30, time.Second*60)}
 }

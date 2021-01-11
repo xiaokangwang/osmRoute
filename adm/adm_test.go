@@ -13,7 +13,7 @@ func TestCreateIndex(t *testing.T) {
 
 func TestEnumEntity(t *testing.T) {
 	mapinde := GetMapFromDir("/run/shm/testdb")
-	outo, oute := mapinde.ScanRegion(53.3532, -6.2598, 4)
+	outo, oute, _ := mapinde.ScanRegion(53.3532, -6.2598, 4)
 	println("%v", len(outo))
 	for _, v := range oute {
 		println(v.String())

@@ -126,7 +126,18 @@ func InterlacedString(a, b string) string {
 
 	return sb.String()
 }
+func DeInterlacedString(in string) (string, string) {
+	var sba strings.Builder
+	var sbb strings.Builder
 
+	lenstr := len(in)
+	for i := 0; i < lenstr; i += 2 {
+		sba.WriteByte(in[i])
+		sbb.WriteByte(in[i+1])
+	}
+
+	return sba.String(), sbb.String()
+}
 func FloatToConstantLengthFloat(input float64) string {
 	strv := fmt.Sprintf("%0+16.6f", input)
 

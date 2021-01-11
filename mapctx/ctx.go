@@ -3,7 +3,9 @@ package mapctx
 import (
 	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/mapindex"
+	"github.com/xiaokangwang/osmRoute/util"
 	"os"
+	"sort"
 	"sync"
 )
 
@@ -23,16 +25,31 @@ func NewMapCtx(maps mapindex.Map, mapFile *os.File) *MapCtx {
 
 func (c MapCtx) GetNodeWithInterconnection(Lat, Lon float64, spec ConnectionSpec) []Node {
 	var nodes []Node
-	_, feaIDs := c.ScanRegion(Lat, Lon, 4)
+	var acceptedNodes []Node
+	_, feaIDs, _ := c.ScanRegion(Lat, Lon, 3)
 	for _, v := range feaIDs {
 		node := (*c.ResolveInfoFromID(v.String())).(*osm.Node)
 		absNode := c.GetNodeFromOSMNode(node)
+		nodes = append(nodes, absNode)
+	}
+
+	sort.Sort(NodeDistanceSlice{
+		nodes:     nodes,
+		OriginLat: Lat,
+		OriginLon: Lon,
+	})
+
+	for _, absNode := range nodes {
 		conn := absNode.FindConnection(spec)
 		if conn != nil && len(conn) >= 1 {
-			nodes = append(nodes, absNode)
+			acceptedNodes = append(acceptedNodes, absNode)
+		}
+		if len(acceptedNodes) >= 3 {
+			break
 		}
 	}
-	return nodes
+
+	return acceptedNodes
 }
 
 func (c MapCtx) ResolveInfoFromID(FeaID string) *osm.Object {
@@ -162,3 +179,23 @@ func (c *MapCtx) NewConnection(from, to *osm.Node) Connection {
 		to:   c.GetNodeFromOSMNode(to),
 	}
 }
+
+type NodeDistanceSlice struct {
+	nodes     []Node
+	OriginLat float64
+	OriginLon float64
+}
+
+func (p NodeDistanceSlice) Len() int { return len(p.nodes) }
+
+func (p NodeDistanceSlice) Less(i, j int) bool {
+	iLon := p.nodes[i].(*NodeImpl).Lon
+	iLat := p.nodes[i].(*NodeImpl).Lat
+
+	jLon := p.nodes[j].(*NodeImpl).Lon
+	jLat := p.nodes[j].(*NodeImpl).Lat
+
+	return util.GPStoMeter(iLon, iLat, p.OriginLon, p.OriginLat) < util.GPStoMeter(jLon, jLat, p.OriginLon, p.OriginLat)
+}
+
+func (p NodeDistanceSlice) Swap(i, j int) { p.nodes[i], p.nodes[j] = p.nodes[j], p.nodes[i] }

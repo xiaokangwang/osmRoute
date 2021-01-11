@@ -8,10 +8,19 @@ import (
 	"io"
 	"modernc.org/sortutil"
 	"os"
+	"sort"
 	"strings"
+	"time"
 )
 
 func (m Map) GetFeatureByID(FeatureID string, file *os.File) *osm.Object {
+
+	//See if we can hit the cache
+	obj, found := m.objCache.Get(FeatureID)
+	if found {
+		return obj.(*osm.Object)
+	}
+
 	//Search First
 	indexEntry := m.GetMapIndexByName("I_B_" + FeatureID)
 	if indexEntry == nil {
@@ -26,6 +35,26 @@ func (m Map) GetFeatureByID(FeatureID string, file *os.File) *osm.Object {
 	defer Scanner.Close()
 	for Scanner.Scan() {
 		object := Scanner.Object()
+
+		var feaid osm.FeatureID
+		switch object.ObjectID().Type() {
+		case osm.TypeNode:
+			objNode := object.(*osm.Node)
+
+			feaid = objNode.FeatureID()
+		case osm.TypeWay:
+			objWay := object.(*osm.Way)
+
+			feaid = objWay.FeatureID()
+		case osm.TypeRelation:
+			objRelation := object.(*osm.Relation)
+			feaid = objRelation.FeatureID()
+		default:
+			panic("Unexpected Type")
+		}
+
+		m.objCache.Set(feaid.String(), &object, time.Second*30)
+
 		if object.ObjectID() == indexEV.ID {
 			retObj := Scanner.Object()
 			return &retObj
@@ -40,6 +69,7 @@ func (m Map) GetRelationByFeature(FeatureID string) osm.FeatureIDs {
 		return nil
 	}
 	indexEV := indexEntry.(MapFeatureID2Refs)
+	sort.Sort(sort.Reverse(FeatureIDSlice(indexEV.Refs)))
 	return indexEV.Refs
 }
 
@@ -95,7 +125,7 @@ func (m Map) GetMapIndexByName(name string) MapIndex {
 	return mapIndex
 }
 
-func (m Map) ScanRegion(Lat, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureIDs) {
+func (m Map) ScanRegion(Lat, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureIDs, []FeatureIDWithLocation) {
 	Index := "I_C_" + InterlacedString(FloatToConstantLengthFloat(Lat), FloatToConstantLengthFloat(Lon))
 	Index = Index[:len(Index)-mask*2]
 	Indexpfx := []byte(Index)
@@ -108,6 +138,7 @@ func (m Map) ScanRegion(Lat, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureI
 	})
 	Objs := make(osm.ObjectIDs, 0, 16)
 	Feas := make(osm.FeatureIDs, 0, 16)
+	FeasP := make([]FeatureIDWithLocation, 0, 16)
 	Inte.Rewind()
 	for {
 		if !Inte.ValidForPrefix(Indexpfx) {
@@ -121,6 +152,13 @@ func (m Map) ScanRegion(Lat, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureI
 		index := mapindex.(MapRegion2IDEntry)
 		Objs = append(Objs, index.IDs...)
 		Feas = append(Feas, index.FIDs...)
+
+		fesl := FeatureIDWithLocation{
+			Lat:        index.Lat,
+			Lon:        index.Lon,
+			FeatureIDs: index.FIDs,
+		}
+		FeasP = append(FeasP, fesl)
 		Inte.Next()
 	}
 	Inte.Close()
@@ -128,5 +166,11 @@ func (m Map) ScanRegion(Lat, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureI
 	Objs = Objs[:no]
 	nf := sortutil.Dedupe(FeatureIDSlice(Feas))
 	Feas = Feas[:nf]
-	return Objs, Feas
+	return Objs, Feas, FeasP
+}
+
+type FeatureIDWithLocation struct {
+	osm.FeatureIDs
+	Lat float64
+	Lon float64
 }
