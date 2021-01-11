@@ -17,6 +17,7 @@ func (m *Map) ConstructIndex(path string) error {
 		return err
 	}
 	Scanner := osmpbf.New(context.Background(), file, 4)
+	defer Scanner.Close()
 	for Scanner.Scan() {
 		object := Scanner.Object()
 		fsb := Scanner.FullyScannedBytes()
