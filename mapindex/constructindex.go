@@ -2,7 +2,6 @@ package mapindex
 
 import (
 	"github.com/paulmach/osm"
-	"strings"
 )
 
 func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
@@ -31,16 +30,13 @@ func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 		name := objNode.Tags.Find("name")
 
 		if name != "" {
-			splname := strings.Split(name, " ")
-			for _, v := range splname {
-				{
-					fts := MapFTS{
-						Name:  v,
-						Refs:  []osm.FeatureID{objNode.FeatureID()},
-						Count: 1,
-					}
-					ret = append(ret, fts)
+			{
+				fts := MapFTS{
+					Name:  name,
+					Refs:  []osm.FeatureID{objNode.FeatureID()},
+					Count: 1,
 				}
+				ret = append(ret, fts)
 			}
 		}
 	case osm.TypeWay:
@@ -60,6 +56,21 @@ func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 						Refs:   osm.FeatureIDs{objWay.FeatureID()},
 					}
 					ret = append(ret, objid)
+				}
+			}
+		}
+
+		{
+			name := objWay.Tags.Find("name")
+
+			if name != "" {
+				{
+					fts := MapFTS{
+						Name:  name,
+						Refs:  []osm.FeatureID{objWay.FeatureID()},
+						Count: 1,
+					}
+					ret = append(ret, fts)
 				}
 			}
 		}

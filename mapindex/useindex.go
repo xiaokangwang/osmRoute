@@ -57,12 +57,13 @@ func (m Map) SearchByNamePrefix(Name string) []string {
 	Indexpfx := []byte(perfix)
 	tx := m.db.NewTransaction(false)
 	defer tx.Discard()
-	Inte := tx.NewKeyIterator(Indexpfx, badger.IteratorOptions{
+	Inte := tx.NewIterator(badger.IteratorOptions{
 		PrefetchValues: true,
 		AllVersions:    false,
 		Prefix:         Indexpfx,
 	})
 	var ret []string
+	Inte.Seek(Indexpfx)
 	for {
 		if !Inte.ValidForPrefix(Indexpfx) {
 			break
@@ -75,6 +76,7 @@ func (m Map) SearchByNamePrefix(Name string) []string {
 		}
 		Inte.Next()
 	}
+	Inte.Close()
 	return ret
 }
 
