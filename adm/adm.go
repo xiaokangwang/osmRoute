@@ -17,3 +17,12 @@ func CreateIndexDb(mapPath string, db *badger.DB) {
 	newMap := mapindex.NewMap(db)
 	_ = newMap.ConstructIndex(mapPath)
 }
+
+func GetMapFromDir(dbDir string) *mapindex.Map {
+	db, err := badger.Open(badger.DefaultOptions(dbDir))
+	if err != nil {
+		panic(err)
+	}
+	newMap := mapindex.NewMap(db)
+	return newMap
+}

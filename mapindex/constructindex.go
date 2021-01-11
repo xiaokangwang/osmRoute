@@ -1,16 +1,12 @@
 package mapindex
 
-import "github.com/paulmach/osm"
+import (
+	"github.com/paulmach/osm"
+	"strings"
+)
 
 func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 	ret := make([]MapIndex, 0, 6)
-
-	{
-		objid := MapID2ItemEntry{}
-		objid.ID = object.ObjectID()
-		objid.SkipLength = skipLen
-		ret = append(ret, objid)
-	}
 
 	switch object.ObjectID().Type() {
 	case osm.TypeNode:
@@ -19,6 +15,7 @@ func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 			objid := MapFeatureID2CurrentObjectIDEntry{}
 			objid.ID = objNode.ObjectID()
 			objid.IDFeat = objNode.FeatureID()
+			objid.SkipLength = skipLen
 			ret = append(ret, objid)
 		}
 		{
@@ -30,12 +27,29 @@ func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 			}
 			ret = append(ret, objloc)
 		}
+
+		name := objNode.Tags.Find("name")
+
+		if name != "" {
+			splname := strings.Split(name, " ")
+			for _, v := range splname {
+				{
+					fts := MapFTS{
+						Name:  v,
+						Refs:  []osm.FeatureID{objNode.FeatureID()},
+						Count: 1,
+					}
+					ret = append(ret, fts)
+				}
+			}
+		}
 	case osm.TypeWay:
 		objWay := object.(*osm.Way)
 		{
 			objid := MapFeatureID2CurrentObjectIDEntry{}
 			objid.ID = objWay.ObjectID()
 			objid.IDFeat = objWay.FeatureID()
+			objid.SkipLength = skipLen
 			ret = append(ret, objid)
 		}
 		{
@@ -55,6 +69,7 @@ func ConstructIndexForObject(object osm.Object, skipLen int64) []MapIndex {
 			objid := MapFeatureID2CurrentObjectIDEntry{}
 			objid.ID = objRelation.ObjectID()
 			objid.IDFeat = objRelation.FeatureID()
+			objid.SkipLength = skipLen
 			ret = append(ret, objid)
 		}
 		{

@@ -37,6 +37,13 @@ func Load(keyMame string, data []byte) MapIndex {
 			panic(err)
 		}
 		mapIndex = unm
+	case "E":
+		var unm MapFTS
+		err := cbor.Unmarshal(data, &unm)
+		if err != nil {
+			panic(err)
+		}
+		mapIndex = unm
 	default:
 		panic("Unrecognized type")
 	}

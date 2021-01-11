@@ -21,7 +21,9 @@ func (m MapID2ItemEntry) Install(oldVal MapIndex) MapIndex {
 }
 
 type MapFeatureID2CurrentObjectIDEntry struct {
-	ID     osm.ObjectID
+	ID         osm.ObjectID
+	SkipLength int64
+
 	IDFeat osm.FeatureID
 }
 
@@ -56,9 +58,12 @@ func (m MapRegion2IDEntry) Install(oldVal MapIndex) MapIndex {
 		ety = oldVal.(MapRegion2IDEntry)
 	}
 	ety.IDs = append(ety.IDs, m.IDs...)
-	sortutil.Dedupe(ObjectIDSlice(ety.IDs))
+	n := sortutil.Dedupe(ObjectIDSlice(ety.IDs))
+	ety.IDs = ety.IDs[:n]
+
 	ety.FIDs = append(ety.FIDs, m.FIDs...)
-	sortutil.Dedupe(FeatureIDSlice(ety.FIDs))
+	n2 := sortutil.Dedupe(FeatureIDSlice(ety.FIDs))
+	ety.FIDs = ety.FIDs[:n2]
 	return ety
 }
 
@@ -77,6 +82,28 @@ func (m MapFeatureID2Refs) Install(oldVal MapIndex) MapIndex {
 		m.Refs = append(m.Refs, oldVal.(MapFeatureID2Refs).Refs...)
 	}
 	sortutil.Dedupe(FeatureIDSlice(m.Refs))
+	return m
+}
+
+type MapFTS struct {
+	Name string
+
+	Refs  osm.FeatureIDs
+	Count uint32
+}
+
+func (m MapFTS) ToIndexKey() string {
+	return "I_E_" + m.Name
+}
+
+func (m MapFTS) Install(oldVal MapIndex) MapIndex {
+	if oldVal == nil {
+		return m
+	}
+	if len(m.Refs) <= 20 {
+		m.Refs = append(m.Refs, oldVal.(MapFTS).Refs...)
+	}
+	m.Count += oldVal.(MapFTS).Count
 	return m
 }
 
