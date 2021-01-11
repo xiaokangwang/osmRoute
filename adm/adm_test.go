@@ -31,6 +31,17 @@ func TestGetID(t *testing.T) {
 	out.FeatureID()
 }
 
+func TestGetID2(t *testing.T) {
+	mapinde := GetMapFromDir("/run/shm/testdb")
+	mapfile, err := os.Open("/run/shm/ireland.osm.pbf")
+	if err != nil {
+		panic(err)
+	}
+	outo := mapinde.GetFeatureByID("way/52879958", mapfile)
+	out := (*outo).(*osm.Way)
+	out.FeatureID()
+}
+
 func TestGetRelation(t *testing.T) {
 	mapinde := GetMapFromDir("/run/shm/testdb")
 	outo := mapinde.GetRelationByFeature("node/990208736")
