@@ -1,9 +1,11 @@
 package mapctx
 
 import (
+	"github.com/beefsack/go-astar"
 	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/mapindex"
 	"github.com/xiaokangwang/osmRoute/util"
+	"math"
 	"os"
 	"sort"
 	"sync"
@@ -14,6 +16,7 @@ type MapCtx struct {
 	mapFile     *os.File
 	mapFileLock *sync.Mutex
 	mapNode     map[string]*NodeImpl
+	spec        ConnectionSpec
 }
 
 func NewMapCtx(maps mapindex.Map, mapFile *os.File) *MapCtx {
@@ -156,7 +159,31 @@ func (c *MapCtx) GetNodeFromOSMNode(osmNode *osm.Node) Node {
 
 type NodeImpl struct {
 	*osm.Node
-	c *MapCtx
+	c          *MapCtx
+	cachedConn []Connection
+}
+
+func (n NodeImpl) PathNeighbors() []astar.Pather {
+	conns := n.FindConnection(n.c.spec)
+	n.cachedConn = conns
+	var ret []astar.Pather
+	for _, v := range conns {
+		ret = append(ret, v.To())
+	}
+	return ret
+}
+
+func (n NodeImpl) PathNeighborCost(to astar.Pather) float64 {
+	for _, v := range n.cachedConn {
+		if v.To() == to {
+			return v.GetCost()
+		}
+	}
+	return math.Inf(1)
+}
+
+func (n NodeImpl) PathEstimatedCost(to astar.Pather) float64 {
+	return util.GPStoMeter(n.Lat, n.Lon, to.(*NodeImpl).Lat, to.(*NodeImpl).Lon)
 }
 
 func (n NodeImpl) FindConnection(spec ConnectionSpec) []Connection {

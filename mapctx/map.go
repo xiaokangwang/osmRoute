@@ -1,6 +1,9 @@
 package mapctx
 
+import "github.com/beefsack/go-astar"
+
 type Node interface {
+	astar.Pather
 	FindConnection(ConnectionSpec) []Connection
 }
 
