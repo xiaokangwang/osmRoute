@@ -55,7 +55,7 @@ func TestMapCtx_TryRoute(t *testing.T) {
 		println(node.FeatureID().String())
 	}
 
-	InitialNodesF := mapCtx.GetNodeWithInterconnection(53.35294, -6.25610, specDef{})
+	InitialNodesF := mapCtx.GetNodeWithInterconnection(53.36135, -6.23813, specDef{})
 
 	for _, v := range InitialNodesF {
 		node := v.(*NodeImpl)

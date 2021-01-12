@@ -140,6 +140,16 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 			if (CanCarUse && spec.CanDrive()) || (CanPedestriansUse && spec.CanWalk()) {
 				ret = append(ret, c.NewConnection(fromNode, wayFrom))
 				ret = append(ret, c.NewConnection(fromNode, wayTo))
+
+				//If there is an seen node, we will generate a route even if it is not the starting or ending
+
+				for _, v := range infoway.Nodes {
+					name := v.FeatureID().String()
+					if _, ok := c.mapNode[name]; ok {
+						SeenNode := (*c.ResolveInfoFromID(name)).(*osm.Node)
+						ret = append(ret, c.NewConnection(fromNode, SeenNode))
+					}
+				}
 			}
 
 		case osm.TypeRelation:
