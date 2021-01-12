@@ -24,6 +24,7 @@ func NewMapCtx(maps mapindex.Map, mapFile *os.File) *MapCtx {
 		Map:         maps,
 		mapFile:     mapFile,
 		mapFileLock: &sync.Mutex{},
+		mapNode:     map[string]*NodeImpl{},
 	}
 }
 
@@ -55,6 +56,10 @@ func (c MapCtx) GetNodeWithInterconnection(Lat, Lon float64, spec ConnectionSpec
 	}
 
 	return acceptedNodes
+}
+
+func (c *MapCtx) SetSpec(spec ConnectionSpec) {
+	c.spec = spec
 }
 
 func (c MapCtx) ResolveInfoFromID(FeaID string) *osm.Object {
@@ -163,7 +168,7 @@ type NodeImpl struct {
 	cachedConn []Connection
 }
 
-func (n NodeImpl) PathNeighbors() []astar.Pather {
+func (n *NodeImpl) PathNeighbors() []astar.Pather {
 	conns := n.FindConnection(n.c.spec)
 	n.cachedConn = conns
 	var ret []astar.Pather
