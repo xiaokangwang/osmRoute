@@ -13,6 +13,7 @@ type MapCtx struct {
 	mapindex.Map
 	mapFile     *os.File
 	mapFileLock *sync.Mutex
+	mapNode     map[string]*NodeImpl
 }
 
 func NewMapCtx(maps mapindex.Map, mapFile *os.File) *MapCtx {
@@ -142,10 +143,15 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 }
 
 func (c *MapCtx) GetNodeFromOSMNode(osmNode *osm.Node) Node {
-	return &NodeImpl{
+	if val, ok := c.mapNode[osmNode.FeatureID().String()]; ok {
+		return val
+	}
+	newnode := &NodeImpl{
 		Node: osmNode,
 		c:    c,
 	}
+	c.mapNode[osmNode.FeatureID().String()] = newnode
+	return newnode
 }
 
 type NodeImpl struct {
