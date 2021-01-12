@@ -138,8 +138,8 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 			wayTo := (*c.ResolveInfoFromID(infoway.Nodes[len(infoway.Nodes)-1].FeatureID().String())).(*osm.Node)
 
 			if (CanCarUse && spec.CanDrive()) || (CanPedestriansUse && spec.CanWalk()) {
-				ret = append(ret, c.NewConnection(fromNode, wayFrom))
-				ret = append(ret, c.NewConnection(fromNode, wayTo))
+				ret = append(ret, c.NewConnection(fromNode, wayFrom, *info))
+				ret = append(ret, c.NewConnection(fromNode, wayTo, *info))
 
 				//If there is an seen node, we will generate a route even if it is not the starting or ending
 
@@ -147,7 +147,7 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 					name := v.FeatureID().String()
 					if _, ok := c.mapNode[name]; ok {
 						SeenNode := (*c.ResolveInfoFromID(name)).(*osm.Node)
-						ret = append(ret, c.NewConnection(fromNode, SeenNode))
+						ret = append(ret, c.NewConnection(fromNode, SeenNode, *info))
 					}
 				}
 			}
@@ -197,6 +197,15 @@ func (n NodeImpl) PathNeighborCost(to astar.Pather) float64 {
 	return math.Inf(1)
 }
 
+func (n NodeImpl) PathNeighborVia(to astar.Pather) osm.Object {
+	for _, v := range n.cachedConn {
+		if v.To() == to {
+			return v.Via()
+		}
+	}
+	return nil
+}
+
 func (n NodeImpl) PathEstimatedCost(to astar.Pather) float64 {
 	return util.GPStoMeter(n.Lat, n.Lon, to.(*NodeImpl).Lat, to.(*NodeImpl).Lon)
 }
@@ -208,6 +217,7 @@ func (n NodeImpl) FindConnection(spec ConnectionSpec) []Connection {
 type ConnectionImpl struct {
 	from Node
 	to   Node
+	via  osm.Object
 }
 
 func (c ConnectionImpl) From() Node {
@@ -218,15 +228,20 @@ func (c ConnectionImpl) To() Node {
 	return c.to
 }
 
+func (c ConnectionImpl) Via() osm.Object {
+	return c.via
+}
+
 func (c ConnectionImpl) GetCost() float64 {
 
 	return util.GPStoMeter(c.from.(*NodeImpl).Lat, c.from.(*NodeImpl).Lon, c.to.(*NodeImpl).Lat, c.to.(*NodeImpl).Lon)
 }
 
-func (c *MapCtx) NewConnection(from, to *osm.Node) Connection {
+func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
 	return ConnectionImpl{
 		from: c.GetNodeFromOSMNode(from),
 		to:   c.GetNodeFromOSMNode(to),
+		via:  via,
 	}
 }
 

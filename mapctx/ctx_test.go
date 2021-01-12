@@ -2,8 +2,10 @@ package mapctx
 
 import (
 	"github.com/beefsack/go-astar"
+	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/adm"
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -64,7 +66,32 @@ func TestMapCtx_TryRoute(t *testing.T) {
 	path, dist, found := astar.Path(InitialNodes[0], InitialNodesF[0])
 	println(found)
 	println(dist)
+	var last astar.Pather
+	reverseAny(path)
 	for _, v := range path {
+		if last != nil {
+			fid := ""
+			ViaObject := last.(Node).PathNeighborVia(v)
+			viatype := ViaObject.ObjectID().Type()
+			switch viatype {
+			case osm.TypeWay:
+				infoway := (ViaObject).(*osm.Way)
+				fid = infoway.FeatureID().String()
+			case osm.TypeRelation:
+				inforela := (ViaObject).(*osm.Relation)
+				_ = inforela
+			}
+			println("via:", fid)
+		}
 		println(v.(*NodeImpl).FeatureID().String())
+		last = v
+	}
+}
+
+func reverseAny(s interface{}) {
+	n := reflect.ValueOf(s).Len()
+	swap := reflect.Swapper(s)
+	for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
+		swap(i, j)
 	}
 }
