@@ -1,0 +1,45 @@
+syntax = "proto3";
+package rpc;
+
+option  go_package = "github.com/xiaokangwang/osmRoute/rpc";
+
+message ObjectResolveRequest {
+  string FeatureID = 1;
+  bool SkipIfNotCached = 2;
+}
+
+message ReturnedObject {
+  string FeatureID = 1;
+  bytes ObjectContent = 2;
+  bool Found = 3;
+}
+
+message ScanRegionRequest {
+  double Lat = 1;
+  double Lon = 2;
+}
+
+message GetAssociatedObjectRequest {
+  string FeatureID = 1;
+}
+
+message ObjectList {
+  repeated string FeatureID = 1;
+}
+
+
+message NameList {
+  repeated string ObjectName = 1;
+}
+
+message NameSearch {
+  string Keyword = 1;
+}
+
+service RouteService {
+  rpc Resolve(ObjectResolveRequest) returns (ReturnedObject) {}
+  rpc ScanRegion(ScanRegionRequest) returns (ObjectList) {}
+  rpc GetAssociatedObject(GetAssociatedObjectRequest) returns (ObjectList) {}
+  rpc SearchByNamePrefix(NameSearch) returns (NameList) {}
+  rpc SearchByNameExact(NameSearch) returns (ObjectList) {}
+}
