@@ -27,6 +27,10 @@ message ObjectList {
   repeated string FeatureID = 1;
 }
 
+message ObjectListWithAssociatedObjects {
+  repeated string FeatureID = 1;
+  map<string, ObjectList> FeatureIDAndAssociatedObjects = 2;
+}
 
 message NameList {
   repeated string ObjectName = 1;
@@ -38,7 +42,7 @@ message NameSearch {
 
 service RouteService {
   rpc Resolve(ObjectResolveRequest) returns (ReturnedObject) {}
-  rpc ScanRegion(ScanRegionRequest) returns (ObjectList) {}
+  rpc ScanRegion(ScanRegionRequest) returns (ObjectListWithAssociatedObjects) {}
   rpc GetAssociatedObject(GetAssociatedObjectRequest) returns (ObjectList) {}
   rpc SearchByNamePrefix(NameSearch) returns (NameList) {}
   rpc SearchByNameExact(NameSearch) returns (ObjectList) {}

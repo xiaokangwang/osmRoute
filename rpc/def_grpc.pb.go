@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RouteServiceClient interface {
 	Resolve(ctx context.Context, in *ObjectResolveRequest, opts ...grpc.CallOption) (*ReturnedObject, error)
-	ScanRegion(ctx context.Context, in *ScanRegionRequest, opts ...grpc.CallOption) (*ObjectList, error)
+	ScanRegion(ctx context.Context, in *ScanRegionRequest, opts ...grpc.CallOption) (*ObjectListWithAssociatedObjects, error)
 	GetAssociatedObject(ctx context.Context, in *GetAssociatedObjectRequest, opts ...grpc.CallOption) (*ObjectList, error)
 	SearchByNamePrefix(ctx context.Context, in *NameSearch, opts ...grpc.CallOption) (*NameList, error)
 	SearchByNameExact(ctx context.Context, in *NameSearch, opts ...grpc.CallOption) (*ObjectList, error)
@@ -41,8 +41,8 @@ func (c *routeServiceClient) Resolve(ctx context.Context, in *ObjectResolveReque
 	return out, nil
 }
 
-func (c *routeServiceClient) ScanRegion(ctx context.Context, in *ScanRegionRequest, opts ...grpc.CallOption) (*ObjectList, error) {
-	out := new(ObjectList)
+func (c *routeServiceClient) ScanRegion(ctx context.Context, in *ScanRegionRequest, opts ...grpc.CallOption) (*ObjectListWithAssociatedObjects, error) {
+	out := new(ObjectListWithAssociatedObjects)
 	err := c.cc.Invoke(ctx, "/rpc.RouteService/ScanRegion", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (c *routeServiceClient) SearchByNameExact(ctx context.Context, in *NameSear
 // for forward compatibility
 type RouteServiceServer interface {
 	Resolve(context.Context, *ObjectResolveRequest) (*ReturnedObject, error)
-	ScanRegion(context.Context, *ScanRegionRequest) (*ObjectList, error)
+	ScanRegion(context.Context, *ScanRegionRequest) (*ObjectListWithAssociatedObjects, error)
 	GetAssociatedObject(context.Context, *GetAssociatedObjectRequest) (*ObjectList, error)
 	SearchByNamePrefix(context.Context, *NameSearch) (*NameList, error)
 	SearchByNameExact(context.Context, *NameSearch) (*ObjectList, error)
@@ -96,7 +96,7 @@ type UnimplementedRouteServiceServer struct {
 func (UnimplementedRouteServiceServer) Resolve(context.Context, *ObjectResolveRequest) (*ReturnedObject, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Resolve not implemented")
 }
-func (UnimplementedRouteServiceServer) ScanRegion(context.Context, *ScanRegionRequest) (*ObjectList, error) {
+func (UnimplementedRouteServiceServer) ScanRegion(context.Context, *ScanRegionRequest) (*ObjectListWithAssociatedObjects, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ScanRegion not implemented")
 }
 func (UnimplementedRouteServiceServer) GetAssociatedObject(context.Context, *GetAssociatedObjectRequest) (*ObjectList, error) {
