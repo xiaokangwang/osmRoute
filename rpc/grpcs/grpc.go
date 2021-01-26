@@ -120,7 +120,7 @@ func (r RouteService) Resolve(ctx context.Context, request *rpc.ObjectResolveReq
 }
 
 func (r RouteService) ScanRegion(ctx context.Context, request *rpc.ScanRegionRequest) (*rpc.ObjectListWithAssociatedObjects, error) {
-	_, obj, _ := r.mapctx.ScanRegion(request.Lat, request.Lon, 4)
+	_, obj, loc := r.mapctx.ScanRegion(request.Lat, request.Lon, 4)
 	return &rpc.ObjectListWithAssociatedObjects{FeatureID: func() []string {
 		var ret []string
 		for _, v := range obj {
@@ -134,7 +134,25 @@ func (r RouteService) ScanRegion(ctx context.Context, request *rpc.ScanRegionReq
 			ret[v.String()] = reps
 		}
 		return ret
-	}()}, nil
+	}(),
+		LocationAssociation: func() []*rpc.LocationAssociation {
+			var ret []*rpc.LocationAssociation
+			for _, v := range loc {
+				ret = append(ret, &rpc.LocationAssociation{
+					Nodes: &rpc.ObjectList{FeatureID: func() []string {
+						var retw []string
+						for _, v2 := range v.FeatureIDs {
+							retw = append(retw, v2.String())
+						}
+						return retw
+					}()},
+					Lat: v.Lat,
+					Lon: v.Lon,
+				})
+			}
+			return ret
+		}(),
+	}, nil
 }
 
 func (r RouteService) GetAssociatedObject(ctx context.Context, request *rpc.GetAssociatedObjectRequest) (*rpc.ObjectList, error) {

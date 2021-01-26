@@ -19,6 +19,12 @@ message ScanRegionRequest {
   double Lon = 2;
 }
 
+message LocationAssociation {
+  ObjectList Nodes = 3;
+  double Lat = 1;
+  double Lon = 2;
+}
+
 message GetAssociatedObjectRequest {
   string FeatureID = 1;
 }
@@ -30,6 +36,7 @@ message ObjectList {
 message ObjectListWithAssociatedObjects {
   repeated string FeatureID = 1;
   map<string, ObjectList> FeatureIDAndAssociatedObjects = 2;
+  repeated LocationAssociation LocationAssociation = 3;
 }
 
 message NameList {
