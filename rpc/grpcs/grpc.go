@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/xiaokangwang/osmRoute/util"
 	"log"
 	"net"
 	"net/http"
@@ -22,8 +23,8 @@ import (
 func main() {
 	grpcServer := grpc.NewServer()
 
-	mapinde := adm.GetMapFromDir("run/shm/testdb")
-	mapfile, err := os.Open("run/shm/ireland.osm.pbf")
+	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
 	}

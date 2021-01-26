@@ -4,6 +4,7 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/adm"
+	"github.com/xiaokangwang/osmRoute/util"
 	"os"
 	"reflect"
 	"testing"
@@ -25,8 +26,8 @@ func (s specDef) CanPublicTransport() bool {
 }
 
 func TestMapCtx_ListRoutes(t *testing.T) {
-	mapinde := adm.GetMapFromDir("/run/shm/testdb")
-	mapfile, err := os.Open("/run/shm/ireland.osm.pbf")
+	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
 	}
@@ -41,8 +42,8 @@ func TestMapCtx_ListRoutes(t *testing.T) {
 }
 
 func TestMapCtx_TryRoute(t *testing.T) {
-	mapinde := adm.GetMapFromDir("/run/shm/testdb")
-	mapfile, err := os.Open("/run/shm/ireland.osm.pbf")
+	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
 	}
