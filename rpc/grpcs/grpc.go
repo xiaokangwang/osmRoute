@@ -3,26 +3,26 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/adm"
 	"github.com/xiaokangwang/osmRoute/mapctx"
 	"github.com/xiaokangwang/osmRoute/rpc"
 	"google.golang.org/grpc"
-	"log"
-	"net"
-	"os"
+	"google.golang.org/grpc/grpclog"
 )
 
 func main() {
-	lis, err := net.Listen("tcp", ":9000")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
 	grpcServer := grpc.NewServer()
 
-	mapinde := adm.GetMapFromDir("/run/shm/testdb")
-	mapfile, err := os.Open("/run/shm/ireland.osm.pbf")
+	mapinde := adm.GetMapFromDir("run/shm/testdb")
+	mapfile, err := os.Open("run/shm/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
 	}
@@ -30,8 +30,23 @@ func main() {
 
 	rpc.RegisterRouteServiceServer(grpcServer, &RouteService{mapctx: mapCtx})
 
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %s", err)
+	wrappedGrpc := grpcweb.WrapServer(grpcServer, grpcweb.WithWebsockets(true), grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+		return true
+	}))
+
+	handler := func(resp http.ResponseWriter, req *http.Request) {
+		req.Header.Set("Upgrade", strings.ToLower(req.Header.Get("Upgrade")))
+		log.Println(fmt.Sprintf("%q %q %q %q", req.Host, req.Method, req.Proto, req.URL))
+		wrappedGrpc.ServeHTTP(resp, req)
+	}
+
+	httpServer := http.Server{
+		Addr:    fmt.Sprintf(":%d", 9000),
+		Handler: http.HandlerFunc(handler),
+	}
+
+	if err := httpServer.ListenAndServe(); err != nil {
+		grpclog.Fatalf("failed starting http server: %v", err)
 	}
 }
 
