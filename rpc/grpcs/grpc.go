@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -44,6 +45,17 @@ func main() {
 		Addr:    fmt.Sprintf(":%d", 9000),
 		Handler: http.HandlerFunc(handler),
 	}
+
+	go func() {
+		lis, err := net.Listen("tcp", ":9001")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %s", err)
+		}
+	}()
 
 	if err := httpServer.ListenAndServe(); err != nil {
 		grpclog.Fatalf("failed starting http server: %v", err)
