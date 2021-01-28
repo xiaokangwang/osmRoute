@@ -11,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // RouteServiceClient is the client API for RouteService service.
@@ -22,6 +23,7 @@ type RouteServiceClient interface {
 	GetAssociatedObject(ctx context.Context, in *GetAssociatedObjectRequest, opts ...grpc.CallOption) (*ObjectList, error)
 	SearchByNamePrefix(ctx context.Context, in *NameSearch, opts ...grpc.CallOption) (*NameList, error)
 	SearchByNameExact(ctx context.Context, in *NameSearch, opts ...grpc.CallOption) (*ObjectList, error)
+	Route(ctx context.Context, in *RoutingDecisionReq, opts ...grpc.CallOption) (*RoutingDecisionResp, error)
 }
 
 type routeServiceClient struct {
@@ -77,6 +79,15 @@ func (c *routeServiceClient) SearchByNameExact(ctx context.Context, in *NameSear
 	return out, nil
 }
 
+func (c *routeServiceClient) Route(ctx context.Context, in *RoutingDecisionReq, opts ...grpc.CallOption) (*RoutingDecisionResp, error) {
+	out := new(RoutingDecisionResp)
+	err := c.cc.Invoke(ctx, "/rpc.RouteService/Route", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RouteServiceServer is the server API for RouteService service.
 // All implementations must embed UnimplementedRouteServiceServer
 // for forward compatibility
@@ -86,6 +97,7 @@ type RouteServiceServer interface {
 	GetAssociatedObject(context.Context, *GetAssociatedObjectRequest) (*ObjectList, error)
 	SearchByNamePrefix(context.Context, *NameSearch) (*NameList, error)
 	SearchByNameExact(context.Context, *NameSearch) (*ObjectList, error)
+	Route(context.Context, *RoutingDecisionReq) (*RoutingDecisionResp, error)
 	mustEmbedUnimplementedRouteServiceServer()
 }
 
@@ -108,6 +120,9 @@ func (UnimplementedRouteServiceServer) SearchByNamePrefix(context.Context, *Name
 func (UnimplementedRouteServiceServer) SearchByNameExact(context.Context, *NameSearch) (*ObjectList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchByNameExact not implemented")
 }
+func (UnimplementedRouteServiceServer) Route(context.Context, *RoutingDecisionReq) (*RoutingDecisionResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Route not implemented")
+}
 func (UnimplementedRouteServiceServer) mustEmbedUnimplementedRouteServiceServer() {}
 
 // UnsafeRouteServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -118,7 +133,7 @@ type UnsafeRouteServiceServer interface {
 }
 
 func RegisterRouteServiceServer(s grpc.ServiceRegistrar, srv RouteServiceServer) {
-	s.RegisterService(&_RouteService_serviceDesc, srv)
+	s.RegisterService(&RouteService_ServiceDesc, srv)
 }
 
 func _RouteService_Resolve_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -211,7 +226,28 @@ func _RouteService_SearchByNameExact_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-var _RouteService_serviceDesc = grpc.ServiceDesc{
+func _RouteService_Route_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutingDecisionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RouteServiceServer).Route(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.RouteService/Route",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RouteServiceServer).Route(ctx, req.(*RoutingDecisionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RouteService_ServiceDesc is the grpc.ServiceDesc for RouteService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RouteService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "rpc.RouteService",
 	HandlerType: (*RouteServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
@@ -234,6 +270,10 @@ var _RouteService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchByNameExact",
 			Handler:    _RouteService_SearchByNameExact_Handler,
+		},
+		{
+			MethodName: "Route",
+			Handler:    _RouteService_Route_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

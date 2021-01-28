@@ -68,6 +68,10 @@ type RouteService struct {
 	mapctx *mapctx.MapCtx
 }
 
+func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*rpc.RoutingDecisionResp, error) {
+	panic("implement me")
+}
+
 func (r RouteService) Resolve(ctx context.Context, request *rpc.ObjectResolveRequest) (*rpc.ReturnedObject, error) {
 	obj := r.mapctx.ResolveInfoFromID(request.FeatureID)
 
