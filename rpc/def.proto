@@ -47,10 +47,34 @@ message NameSearch {
   string Keyword = 1;
 }
 
+message RoutingDecision {
+  map<string, string> AssociatedData = 1;
+  string Via = 2;
+  string From = 3;
+}
+
+message RoutingDecisionResp {
+  repeated RoutingDecision Hops = 1;
+}
+
+message RoutingDecisionReq {
+  RoutingDecisionReqLocation From = 1;
+  RoutingDecisionReqLocation To = 2;
+
+  map<string, string> AdditionalInfo = 3;
+}
+
+
+message RoutingDecisionReqLocation {
+  double Lat = 1;
+  double Lon = 2;
+}
+
 service RouteService {
   rpc Resolve(ObjectResolveRequest) returns (ReturnedObject) {}
   rpc ScanRegion(ScanRegionRequest) returns (ObjectListWithAssociatedObjects) {}
   rpc GetAssociatedObject(GetAssociatedObjectRequest) returns (ObjectList) {}
   rpc SearchByNamePrefix(NameSearch) returns (NameList) {}
   rpc SearchByNameExact(NameSearch) returns (ObjectList) {}
+  rpc Route(RoutingDecisionReq) returns (RoutingDecisionResp) {}
 }
