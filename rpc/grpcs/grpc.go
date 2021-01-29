@@ -171,7 +171,9 @@ func (r RouteService) GetAssociatedObject(ctx context.Context, request *rpc.GetA
 }
 
 func (r RouteService) SearchByNamePrefix(ctx context.Context, search *rpc.NameSearch) (*rpc.NameList, error) {
-	panic("implement me")
+	keywordPrefix := search.Keyword
+	results := r.mapctx.SearchByNamePrefix(keywordPrefix)
+	return &rpc.NameList{ObjectName: results}, nil
 }
 
 func (r RouteService) SearchByNameExact(ctx context.Context, search *rpc.NameSearch) (*rpc.ObjectList, error) {
