@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/beefsack/go-astar"
 	"github.com/xiaokangwang/osmRoute/util"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -68,8 +70,75 @@ type RouteService struct {
 	mapctx *mapctx.MapCtx
 }
 
-func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*rpc.RoutingDecisionResp, error) {
+type specDef struct {
+}
+
+func (s specDef) CanWalk() bool {
+	return false
+}
+
+func (s specDef) CanDrive() bool {
+	return true
+}
+
+func (s specDef) CanPublicTransport() bool {
 	panic("implement me")
+}
+
+func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*rpc.RoutingDecisionResp, error) {
+	var ret rpc.RoutingDecisionResp
+
+	InitialNodes := r.mapctx.GetNodeWithInterconnection(req.From.Lat, req.From.Lon, specDef{})
+
+	for _, v := range InitialNodes {
+		node := v.(*mapctx.NodeImpl)
+		println(node.FeatureID().String())
+	}
+
+	InitialNodesF := r.mapctx.GetNodeWithInterconnection(req.From.Lat, req.To.Lon, specDef{})
+
+	for _, v := range InitialNodesF {
+		node := v.(*mapctx.NodeImpl)
+		println(node.FeatureID().String())
+	}
+	path, dist, found := astar.Path(InitialNodes[0], InitialNodesF[0])
+	println(found)
+	println(dist)
+	var last astar.Pather
+	reverseAny(path)
+	for _, v := range path {
+
+		var hop rpc.RoutingDecision
+
+		if last != nil {
+			fid := ""
+			ViaObject := last.(mapctx.Node).PathNeighborVia(v)
+			viatype := ViaObject.ObjectID().Type()
+			switch viatype {
+			case osm.TypeWay:
+				infoway := (ViaObject).(*osm.Way)
+				fid = infoway.FeatureID().String()
+			case osm.TypeRelation:
+				inforela := (ViaObject).(*osm.Relation)
+				_ = inforela
+			}
+			println("via:", fid)
+			hop.Via = fid
+		}
+		println(v.(*mapctx.NodeImpl).FeatureID().String())
+		last = v
+		hop.From = v.(*mapctx.NodeImpl).FeatureID().String()
+
+		ret.Hops = append(ret.Hops, &hop)
+	}
+	return &ret, nil
+}
+func reverseAny(s interface{}) {
+	n := reflect.ValueOf(s).Len()
+	swap := reflect.Swapper(s)
+	for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
+		swap(i, j)
+	}
 }
 
 func (r RouteService) Resolve(ctx context.Context, request *rpc.ObjectResolveRequest) (*rpc.ReturnedObject, error) {
