@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	_"github.com/jnewmano/grpc-json-proxy/codec"
 	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/adm"
 	"github.com/xiaokangwang/osmRoute/mapctx"
@@ -177,5 +178,17 @@ func (r RouteService) SearchByNamePrefix(ctx context.Context, search *rpc.NameSe
 }
 
 func (r RouteService) SearchByNameExact(ctx context.Context, search *rpc.NameSearch) (*rpc.ObjectList, error) {
-	panic("implement me")
+	keywordPrefix := search.Keyword
+	results, _ := r.mapctx.SearchByName(keywordPrefix)
+	for _, v := range results {
+		println(v.String())
+	}
+	return &rpc.ObjectList{FeatureID: func() []string {
+		var ret []string
+		for _, v := range results {
+			ret = append(ret, v.String())
+		}
+		return ret
+	}()}, nil
+
 }
