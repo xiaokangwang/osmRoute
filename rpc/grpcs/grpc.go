@@ -4,30 +4,40 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/beefsack/go-astar"
-	"github.com/xiaokangwang/osmRoute/util"
-	"log"
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"reflect"
-	"strings"
 
+	"github.com/beefsack/go-astar"
+	"github.com/xiaokangwang/osmRoute/util"
+
+	"github.com/go-chi/chi"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	_"github.com/jnewmano/grpc-json-proxy/codec"
+	_ "github.com/jnewmano/grpc-json-proxy/codec"
 	"github.com/paulmach/osm"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/xiaokangwang/osmRoute/adm"
 	"github.com/xiaokangwang/osmRoute/mapctx"
 	"github.com/xiaokangwang/osmRoute/rpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 )
 
+func logInit() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(logrus.DebugLevel)
+}
+
 func main() {
+	logInit()
 	grpcServer := grpc.NewServer()
 
-	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
-	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
+	mapinde := adm.GetMapFromDir(path.Join(util.GetBaseDirFromEnvironment(), "testdb"))
+	mapfile, err := os.Open(path.Join(util.GetBaseDirFromEnvironment(), "ireland.osm.pbf"))
 	if err != nil {
 		panic(err)
 	}
@@ -39,15 +49,18 @@ func main() {
 		return true
 	}))
 
-	handler := func(resp http.ResponseWriter, req *http.Request) {
-		req.Header.Set("Upgrade", strings.ToLower(req.Header.Get("Upgrade")))
-		log.Println(fmt.Sprintf("%q %q %q %q", req.Host, req.Method, req.Proto, req.URL))
-		wrappedGrpc.ServeHTTP(resp, req)
-	}
+	router := chi.NewRouter()
+	grpcWebMiddleware := util.NewGrpcWebMiddleware(wrappedGrpc)
+	router.Use(
+		chiMiddleware.Logger,
+		chiMiddleware.Recoverer,
+		grpcWebMiddleware.Handler,
+	)
+	router.Post("/rpc", grpcWebMiddleware.DefaultFailureHandler)
 
 	httpServer := http.Server{
 		Addr:    fmt.Sprintf(":%d", 9000),
-		Handler: http.HandlerFunc(handler),
+		Handler: router,
 	}
 
 	go func() {
@@ -62,7 +75,7 @@ func main() {
 	}()
 
 	if err := httpServer.ListenAndServe(); err != nil {
-		grpclog.Fatalf("failed starting http server: %v", err)
+		log.Fatalf("failed starting http server: %v", err)
 	}
 }
 
