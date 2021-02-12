@@ -60,9 +60,19 @@ func main() {
 
 	rpc.RegisterRouteServiceServer(grpcServer, &RouteService{mapctx: mapCtx})
 
-	wrappedGrpc := grpcweb.WrapServer(grpcServer, grpcweb.WithWebsockets(true), grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
-		return true
-	}))
+	options := []grpcweb.Option{
+		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+		grpcweb.WithOriginFunc(func(origin string) bool {
+			return true
+		}),
+		grpcweb.WithWebsockets(true),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+			return true
+		}),
+		grpcweb.WithAllowedRequestHeaders([]string{"*"}),
+	}
+
+	wrappedGrpc := grpcweb.WrapServer(grpcServer, options...)
 
 	router := chi.NewRouter()
 	grpcWebMiddleware := util.NewGrpcWebMiddleware(wrappedGrpc)
@@ -74,12 +84,12 @@ func main() {
 	router.Post("/rpc", grpcWebMiddleware.DefaultFailureHandler)
 
 	httpServer := http.Server{
-		Addr:    fmt.Sprintf(":%d", 9000),
+		Addr:    fmt.Sprintf("localhost:%d", 9000),
 		Handler: router,
 	}
 
 	go func() {
-		lis, err := net.Listen("tcp", ":9001")
+		lis, err := net.Listen("tcp", "localhost:9001")
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
