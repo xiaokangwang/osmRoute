@@ -15,6 +15,9 @@ import (
 
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	_ "github.com/jnewmano/grpc-json-proxy/codec"
 	"github.com/paulmach/osm"
@@ -30,11 +33,23 @@ func logInit() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logrus.DebugLevel)
+	grpc.EnableTracing = true
 }
 
 func main() {
 	logInit()
-	grpcServer := grpc.NewServer()
+	logger := log.WithField("module", "gRPC")
+	grpc_logrus.ReplaceGrpcLogger(logger)
+	grpcServer := grpc.NewServer(
+		grpc_middleware.WithUnaryServerChain(
+			grpc_logrus.UnaryServerInterceptor(logger),
+			grpc_prometheus.UnaryServerInterceptor,
+		),
+		grpc_middleware.WithStreamServerChain(
+			grpc_logrus.StreamServerInterceptor(logger),
+			grpc_prometheus.StreamServerInterceptor,
+		),
+	)
 
 	mapinde := adm.GetMapFromDir(path.Join(util.GetBaseDirFromEnvironment(), "testdb"))
 	mapfile, err := os.Open(path.Join(util.GetBaseDirFromEnvironment(), "ireland.osm.pbf"))
