@@ -88,6 +88,8 @@ func (s specDef) CanPublicTransport() bool {
 func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*rpc.RoutingDecisionResp, error) {
 	var ret rpc.RoutingDecisionResp
 
+	r.mapctx.SetSpec(specDef{})
+
 	InitialNodes := r.mapctx.GetNodeWithInterconnection(req.From.Lat, req.From.Lon, specDef{})
 
 	for _, v := range InitialNodes {
@@ -95,7 +97,7 @@ func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*
 		println(node.FeatureID().String())
 	}
 
-	InitialNodesF := r.mapctx.GetNodeWithInterconnection(req.From.Lat, req.To.Lon, specDef{})
+	InitialNodesF := r.mapctx.GetNodeWithInterconnection(req.To.Lat, req.To.Lon, specDef{})
 
 	for _, v := range InitialNodesF {
 		node := v.(*mapctx.NodeImpl)
