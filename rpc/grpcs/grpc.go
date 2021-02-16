@@ -4,29 +4,55 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/beefsack/go-astar"
-	"github.com/xiaokangwang/osmRoute/util"
-	"log"
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"reflect"
-	"strings"
 
+	"github.com/beefsack/go-astar"
+	"github.com/xiaokangwang/osmRoute/util"
+
+	"github.com/go-chi/chi"
+	chiMiddleware "github.com/go-chi/chi/middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	_ "github.com/jnewmano/grpc-json-proxy/codec"
 	"github.com/paulmach/osm"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/xiaokangwang/osmRoute/adm"
 	"github.com/xiaokangwang/osmRoute/mapctx"
 	"github.com/xiaokangwang/osmRoute/rpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 )
 
-func main() {
-	grpcServer := grpc.NewServer()
+func logInit() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(logrus.DebugLevel)
+	grpc.EnableTracing = true
+}
 
-	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
-	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
+func main() {
+	logInit()
+	logger := log.WithField("module", "gRPC")
+	grpc_logrus.ReplaceGrpcLogger(logger)
+	grpcServer := grpc.NewServer(
+		grpc_middleware.WithUnaryServerChain(
+			grpc_logrus.UnaryServerInterceptor(logger),
+			grpc_prometheus.UnaryServerInterceptor,
+		),
+		grpc_middleware.WithStreamServerChain(
+			grpc_logrus.StreamServerInterceptor(logger),
+			grpc_prometheus.StreamServerInterceptor,
+		),
+	)
+
+	mapinde := adm.GetMapFromDir(path.Join(util.GetBaseDirFromEnvironment(), "testdb"))
+	mapfile, err := os.Open(path.Join(util.GetBaseDirFromEnvironment(), "ireland.osm.pbf"))
 	if err != nil {
 		panic(err)
 	}
@@ -34,23 +60,36 @@ func main() {
 
 	rpc.RegisterRouteServiceServer(grpcServer, &RouteService{mapctx: mapCtx})
 
-	wrappedGrpc := grpcweb.WrapServer(grpcServer, grpcweb.WithWebsockets(true), grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
-		return true
-	}))
-
-	handler := func(resp http.ResponseWriter, req *http.Request) {
-		req.Header.Set("Upgrade", strings.ToLower(req.Header.Get("Upgrade")))
-		log.Println(fmt.Sprintf("%q %q %q %q", req.Host, req.Method, req.Proto, req.URL))
-		wrappedGrpc.ServeHTTP(resp, req)
+	options := []grpcweb.Option{
+		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+		grpcweb.WithOriginFunc(func(origin string) bool {
+			return true
+		}),
+		grpcweb.WithWebsockets(true),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+			return true
+		}),
+		grpcweb.WithAllowedRequestHeaders([]string{"*"}),
 	}
 
+	wrappedGrpc := grpcweb.WrapServer(grpcServer, options...)
+
+	router := chi.NewRouter()
+	grpcWebMiddleware := util.NewGrpcWebMiddleware(wrappedGrpc)
+	router.Use(
+		chiMiddleware.Logger,
+		chiMiddleware.Recoverer,
+		grpcWebMiddleware.Handler,
+	)
+	router.Post("/rpc", grpcWebMiddleware.DefaultFailureHandler)
+
 	httpServer := http.Server{
-		Addr:    fmt.Sprintf(":%d", 9000),
-		Handler: http.HandlerFunc(handler),
+		Addr:    fmt.Sprintf("localhost:%d", 9000),
+		Handler: router,
 	}
 
 	go func() {
-		lis, err := net.Listen("tcp", ":9001")
+		lis, err := net.Listen("tcp", "localhost:9001")
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
@@ -61,7 +100,7 @@ func main() {
 	}()
 
 	if err := httpServer.ListenAndServe(); err != nil {
-		grpclog.Fatalf("failed starting http server: %v", err)
+		log.Fatalf("failed starting http server: %v", err)
 	}
 }
 
@@ -248,5 +287,17 @@ func (r RouteService) SearchByNamePrefix(ctx context.Context, search *rpc.NameSe
 }
 
 func (r RouteService) SearchByNameExact(ctx context.Context, search *rpc.NameSearch) (*rpc.ObjectList, error) {
-	panic("implement me")
+	keywordPrefix := search.Keyword
+	results, _ := r.mapctx.SearchByName(keywordPrefix)
+	for _, v := range results {
+		println(v.String())
+	}
+	return &rpc.ObjectList{FeatureID: func() []string {
+		var ret []string
+		for _, v := range results {
+			ret = append(ret, v.String())
+		}
+		return ret
+	}()}, nil
+
 }

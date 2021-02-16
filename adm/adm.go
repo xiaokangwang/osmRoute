@@ -2,11 +2,15 @@ package adm
 
 import (
 	"github.com/dgraph-io/badger/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/xiaokangwang/osmRoute/mapindex"
 )
 
 func CreateIndex(mapPath string, dbDir string) {
-	db, err := badger.Open(badger.DefaultOptions(dbDir))
+	logger := log.WithField("module", "database")
+	opts := badger.DefaultOptions(dbDir)
+	opts.Logger = logger
+	db, err := badger.Open(opts)
 	if err != nil {
 		panic(err)
 	}
@@ -19,7 +23,10 @@ func CreateIndexDb(mapPath string, db *badger.DB) {
 }
 
 func GetMapFromDir(dbDir string) *mapindex.Map {
-	db, err := badger.Open(badger.DefaultOptions(dbDir))
+	logger := log.WithField("module", "database")
+	opts := badger.DefaultOptions(dbDir)
+	opts.Logger = logger
+	db, err := badger.Open(opts)
 	if err != nil {
 		panic(err)
 	}
