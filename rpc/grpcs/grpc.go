@@ -182,6 +182,11 @@ func reverseAny(s interface{}) {
 	}
 }
 
+type KnownPoint struct {
+	Lon float64
+	Lat float64
+}
+
 func (r RouteService) Resolve(ctx context.Context, request *rpc.ObjectResolveRequest) (*rpc.ReturnedObject, error) {
 	obj := r.mapctx.ResolveInfoFromID(request.FeatureID)
 
@@ -195,6 +200,36 @@ func (r RouteService) Resolve(ctx context.Context, request *rpc.ObjectResolveReq
 	switch (*obj).ObjectID().Type() {
 	case osm.TypeWay:
 		objWay := (*obj).(*osm.Way)
+		//Sample some way
+		var knownPoints []KnownPoint
+		length := len(objWay.Nodes)
+		resolve := func(i int) {
+			osmobj := (*r.mapctx.ResolveInfoFromID(objWay.Nodes[i].FeatureID().String())).(*osm.Node)
+			objWay.Nodes[i].Lon = osmobj.Lon
+			objWay.Nodes[i].Lat = osmobj.Lat
+			knownPoints = append(knownPoints, KnownPoint{
+				Lon: osmobj.Lon,
+				Lat: osmobj.Lat,
+			})
+		}
+		if length <= 2 {
+			for i, _ := range objWay.Nodes {
+				resolve(i)
+			}
+		} else {
+			resolve(0)
+			resolve(length / 2)
+			resolve(length - 1)
+		}
+
+		byw, err := json.Marshal(knownPoints)
+		if err != nil {
+			panic(err)
+		}
+		objWay.Tags = append(objWay.Tags, osm.Tag{
+			Key:   "X-osmRoute-KnownPoints",
+			Value: string(byw),
+		})
 		by, err := json.Marshal(objWay)
 		if err != nil {
 			panic(err)
