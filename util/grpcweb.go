@@ -13,8 +13,9 @@ type GrpcWebMiddleware struct {
 
 func (m *GrpcWebMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Header.Set("Upgrade", strings.ToLower(r.Header.Get("Upgrade")))
 		if m.IsAcceptableGrpcCorsRequest(r) || m.IsGrpcWebRequest(r) || m.IsGrpcWebSocketRequest(r) {
-			r.Header.Set("Upgrade", strings.ToLower(r.Header.Get("Upgrade")))
+			r.Header.Set("Wsauthtoken", r.URL.Query().Get("token"))
 			m.ServeHTTP(w, r)
 			return
 		}
