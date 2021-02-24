@@ -69,7 +69,8 @@ func main() {
 		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
 			return true
 		}),
-		grpcweb.WithAllowedRequestHeaders([]string{"*"}),
+		grpcweb.WithAllowedRequestHeaders([]string{"Wsauthtoken",
+			"X-Forwarded-For", "Host", "host", "Origin", "origin"}),
 	}
 
 	wrappedGrpc := grpcweb.WrapServer(grpcServer, options...)
