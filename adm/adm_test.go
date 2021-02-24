@@ -2,6 +2,7 @@ package adm
 
 import (
 	"github.com/paulmach/osm"
+	"github.com/stretchr/testify/assert"
 	"github.com/xiaokangwang/osmRoute/util"
 	"os"
 	"testing"
@@ -10,6 +11,10 @@ import (
 func TestCreateIndex(t *testing.T) {
 	os.MkdirAll(util.GetBaseDirFromEnvironment()+"/testdb", 0700)
 	CreateIndex(util.GetBaseDirFromEnvironment()+"/ireland.osm.pbf", util.GetBaseDirFromEnvironment()+"/testdb")
+
+	_, err := os.Stat(util.GetBaseDirFromEnvironment() + "/testdb")
+
+	assert.Nil(t, err)
 }
 
 func TestEnumEntity(t *testing.T) {
