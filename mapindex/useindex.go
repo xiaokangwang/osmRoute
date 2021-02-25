@@ -209,6 +209,10 @@ func (m Map) GetMapIndexByName(name string) MapIndex {
 }
 
 func (m Map) ScanRegion(Lat, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureIDs, []FeatureIDWithLocation) {
+	return m.scanRegion(Lat, Lon, mask)
+}
+
+func (m Map) scanRegion(Lat float64, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureIDs, []FeatureIDWithLocation) {
 	Index := "I_C_" + InterlacedString(FloatToConstantLengthFloat(Lat), FloatToConstantLengthFloat(Lon))
 	Index = Index[:len(Index)-mask*2]
 	Indexpfx := []byte(Index)
@@ -237,9 +241,10 @@ func (m Map) ScanRegion(Lat, Lon float64, mask int) (osm.ObjectIDs, osm.FeatureI
 		Feas = append(Feas, index.FIDs...)
 
 		fesl := FeatureIDWithLocation{
-			Lat:        index.Lat,
-			Lon:        index.Lon,
-			FeatureIDs: index.FIDs,
+			Lat:                  index.Lat,
+			Lon:                  index.Lon,
+			FeatureIDs:           index.FIDs,
+			SignificantRelations: index.Significant,
 		}
 		FeasP = append(FeasP, fesl)
 		Inte.Next()
@@ -256,4 +261,6 @@ type FeatureIDWithLocation struct {
 	osm.FeatureIDs
 	Lat float64
 	Lon float64
+
+	SignificantRelations osm.FeatureIDs
 }

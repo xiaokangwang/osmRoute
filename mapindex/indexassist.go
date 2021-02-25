@@ -68,6 +68,10 @@ func (m MapRegion2IDEntry) Install(oldVal MapIndex) MapIndex {
 	ety.FIDs = append(ety.FIDs, m.FIDs...)
 	n2 := sortutil.Dedupe(FeatureIDSlice(ety.FIDs))
 	ety.FIDs = ety.FIDs[:n2]
+
+	ety.Significant = append(ety.Significant, m.Significant...)
+	n3 := sortutil.Dedupe(FeatureIDSlice(ety.Significant))
+	ety.Significant = ety.Significant[:n3]
 	return ety
 }
 
