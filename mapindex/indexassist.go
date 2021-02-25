@@ -48,6 +48,8 @@ type MapRegion2IDEntry struct {
 	FIDs osm.FeatureIDs
 	Lat  float64
 	Lon  float64
+
+	Significant osm.FeatureIDs
 }
 
 func (m MapRegion2IDEntry) ToIndexKey() string {

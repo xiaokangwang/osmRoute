@@ -2,7 +2,7 @@ package mapindex
 
 import (
 	"context"
-	"github.com/dgraph-io/badger/v2"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/fxamacker/cbor"
 	"github.com/paulmach/osm"
 	"github.com/paulmach/osm/osmpbf"
