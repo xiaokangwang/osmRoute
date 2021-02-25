@@ -35,6 +35,7 @@ func TestGetID(t *testing.T) {
 	outo := mapinde.GetFeatureByID("node/2718267438", mapfile)
 	out := (*outo).(*osm.Node)
 	out.FeatureID()
+	assert.Equal(t, "node/2718267438", out.FeatureID().String())
 }
 
 func TestGetID2(t *testing.T) {
@@ -46,6 +47,7 @@ func TestGetID2(t *testing.T) {
 	outo := mapinde.GetFeatureByID("way/52879958", mapfile)
 	out := (*outo).(*osm.Way)
 	out.FeatureID()
+	assert.Equal(t, "way/52879958", out.FeatureID().String())
 }
 
 func TestGetRelation(t *testing.T) {
@@ -72,7 +74,7 @@ func TestSearch(t *testing.T) {
 	for _, v := range outo {
 		println(v.String())
 	}
-
+	assert.GreaterOrEqual(t, 1, len(outo))
 }
 
 func TestSearchPrefix(t *testing.T) {
@@ -81,5 +83,5 @@ func TestSearchPrefix(t *testing.T) {
 	for _, v := range outo {
 		println(v)
 	}
-
+	assert.GreaterOrEqual(t, 1, len(outo))
 }
