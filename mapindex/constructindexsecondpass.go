@@ -1,6 +1,7 @@
 package mapindex
 
 import (
+	"fmt"
 	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/interfacew"
 )
@@ -20,7 +21,12 @@ func ConstructIndexForObjectSecondPass(object osm.Object, skipLen int64, m inter
 					fallthrough
 				case "platform_exit_only":
 					{
-						nodedata := (*m.ResolveInfoFromID(v.FeatureID().String())).(*osm.Node)
+						retdata := m.ResolveInfoFromID(v.FeatureID().String())
+						if retdata == nil {
+							fmt.Println("Unable to create index for ", v.FeatureID().String())
+							continue
+						}
+						nodedata := (*retdata).(*osm.Node)
 
 						objloc := MapRegion2IDEntry{
 							Significant: []osm.FeatureID{objRelation.ID.FeatureID()},
