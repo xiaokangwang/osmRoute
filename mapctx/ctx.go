@@ -1,6 +1,7 @@
 package mapctx
 
 import (
+	"errors"
 	"github.com/beefsack/go-astar"
 	"github.com/paulmach/osm"
 	"github.com/xiaokangwang/osmRoute/mapindex"
@@ -8,6 +9,7 @@ import (
 	"math"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 )
 
@@ -75,6 +77,23 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 	fromNode := (*c.ResolveInfoFromID(FeaID)).(*osm.Node)
 
 	relations := c.GetRelationByFeature(FeaID)
+	ret = c.CreateInterconnections(relations, spec, ret, fromNode, []osm.FeatureID{})
+
+	//Scan if there is a bus station
+
+	_, _, ScanedResult := c.ScanRegion(fromNode.Lat, fromNode.Lon, 4)
+
+	for _, v := range ScanedResult {
+		for _, r := range v.SignificantRelations {
+			ret = c.CreateInterconnections([]osm.FeatureID{r}, spec, ret, fromNode, v.FeatureIDs)
+		}
+
+	}
+
+	return ret
+}
+
+func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec ConnectionSpec, ret []Connection, fromNode *osm.Node, associatedNodeID osm.FeatureIDs) []Connection {
 	for _, v := range relations {
 		info := c.ResolveInfoFromID(v.String())
 		switch v.Type() {
@@ -155,9 +174,34 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 		case osm.TypeRelation:
 			inforela := (*info).(*osm.Relation)
 			_ = inforela
+
+			routevalue := inforela.Tags.Find("route")
+
+			if routevalue == "bus" {
+				if member, errw := checkIntersectionAssociation(inforela.Members, associatedNodeID); errw != nil {
+					//OK, now generate a route for all other stations
+					startexact := (*c.ResolveInfoFromID(member.FeatureID().String())).(*osm.Node)
+					for _, memberw := range inforela.Members {
+						ending := (*c.ResolveInfoFromID(memberw.FeatureID().String())).(*osm.Node)
+						ret = append(ret, c.NewConnection4(fromNode, startexact, ending, *info))
+					}
+
+				}
+			}
 		}
 	}
 	return ret
+}
+
+func checkIntersectionAssociation(relationMember osm.Members, candidate osm.FeatureIDs) (osm.Member, error) {
+	for _, v := range relationMember {
+		for _, v2 := range candidate {
+			if v.FeatureID() == v2 && strings.HasPrefix(v.Role, "platform") {
+				return v, nil
+			}
+		}
+	}
+	return osm.Member{}, errors.New("not found")
 }
 
 func (c *MapCtx) GetNodeFromOSMNode(osmNode *osm.Node) Node {
@@ -215,9 +259,10 @@ func (n NodeImpl) FindConnection(spec ConnectionSpec) []Connection {
 }
 
 type ConnectionImpl struct {
-	from Node
-	to   Node
-	via  osm.Object
+	from      Node
+	to        Node
+	via       osm.Object
+	fromExact Node
 }
 
 func (c ConnectionImpl) From() Node {
@@ -242,6 +287,15 @@ func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
 		from: c.GetNodeFromOSMNode(from),
 		to:   c.GetNodeFromOSMNode(to),
 		via:  via,
+	}
+}
+
+func (c *MapCtx) NewConnection4(from, to, exact *osm.Node, via osm.Object) Connection {
+	return ConnectionImpl{
+		from:      c.GetNodeFromOSMNode(from),
+		to:        c.GetNodeFromOSMNode(to),
+		via:       via,
+		fromExact: c.GetNodeFromOSMNode(exact),
 	}
 }
 
