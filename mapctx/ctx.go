@@ -210,7 +210,7 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 							fallthrough
 						case "platform_exit_only":
 							ending := (*c.ResolveInfoFromID(memberw.FeatureID().String())).(*osm.Node)
-							connection := c.NewConnection5(fromNode, startexact, ending, *info, 1)
+							connection := c.NewConnection5(fromNode, startexact, ending, *info, 0.001)
 							_ = connection
 							ret = append(ret, connection)
 						}
@@ -280,6 +280,15 @@ func (n NodeImpl) PathNeighborVia(to astar.Pather) osm.Object {
 	for _, v := range n.cachedConn {
 		if v.To() == to {
 			return v.Via()
+		}
+	}
+	return nil
+}
+
+func (n NodeImpl) PathNeighborConnection(to astar.Pather) *ConnectionImpl {
+	for _, v := range n.cachedConn {
+		if v.To() == to {
+			return v.(*ConnectionImpl)
 		}
 	}
 	return nil
