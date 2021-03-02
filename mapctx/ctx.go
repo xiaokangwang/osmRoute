@@ -31,9 +31,13 @@ func NewMapCtx(maps mapindex.Map, mapFile *os.File) *MapCtx {
 }
 
 func (c MapCtx) GetNodeWithInterconnection(Lat, Lon float64, spec ConnectionSpec) []Node {
+	return c.GetNodeWithInterconnection4(Lat, Lon, spec, 3)
+}
+
+func (c MapCtx) GetNodeWithInterconnection4(Lat, Lon float64, spec ConnectionSpec, mask int) []Node {
 	var feaIDs osm.FeatureIDs
 	var acceptedNodes []Node
-	_, _, feaG := c.ScanRegion(Lat, Lon, 3)
+	_, _, feaG := c.ScanRegion(Lat, Lon, mask)
 
 	sort.Sort(NodeGDistanceSlice{
 		nodes:     feaG,
@@ -81,7 +85,7 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 
 	//Scan if there is a bus station
 
-	_, _, ScanedResult := c.ScanRegion(fromNode.Lat, fromNode.Lon, 4)
+	_, _, ScanedResult := c.ScanRegion(fromNode.Lat, fromNode.Lon, 3)
 
 	for _, v := range ScanedResult {
 		for _, r := range v.SignificantRelations {
@@ -90,7 +94,26 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 
 	}
 
+	//For Bus stop, we allow user to wrap to a nearby location
+	if spec.CanPublicTransport() && fromNode.Tags.Find("bus") == "yes" {
+		nodes := c.GetNodeWithInterconnection4(fromNode.Lat, fromNode.Lon, specProxyNoBus{spec}, 2)
+
+		if len(nodes) > 0 {
+			for _, node := range nodes[:1] {
+				ret = append(ret, c.ListRoutes(node.(*NodeImpl).FeatureID().String(), specProxyNoBus{spec})...)
+			}
+		}
+	}
+
 	return ret
+}
+
+type specProxyNoBus struct {
+	ConnectionSpec
+}
+
+func (s specProxyNoBus) CanPublicTransport() bool {
+	return false
 }
 
 func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec ConnectionSpec, ret []Connection, fromNode *osm.Node, associatedNodeID osm.FeatureIDs) []Connection {
@@ -177,7 +200,7 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 
 			routevalue := inforela.Tags.Find("route")
 
-			if routevalue == "bus" {
+			if routevalue == "bus" && spec.CanPublicTransport() {
 				if member, errw := checkIntersectionAssociation(inforela.Members, associatedNodeID); errw == nil {
 					//OK, now generate a route for all other stations
 					startexact := (*c.ResolveInfoFromID(member.FeatureID().String())).(*osm.Node)

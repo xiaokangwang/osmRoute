@@ -23,7 +23,7 @@ func (s specDef) CanDrive() bool {
 }
 
 func (s specDef) CanPublicTransport() bool {
-	panic("implement me")
+	return true
 }
 
 func TestMapCtx_ListRoutes(t *testing.T) {
