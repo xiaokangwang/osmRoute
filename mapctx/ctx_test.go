@@ -82,6 +82,7 @@ func TestMapCtx_TryRoute(t *testing.T) {
 			case osm.TypeRelation:
 				inforela := (ViaObject).(*osm.Relation)
 				_ = inforela
+				fid = inforela.FeatureID().String()
 			}
 			println("via:", fid)
 		}
@@ -100,14 +101,14 @@ func TestMapCtx_TryRouteWithBus(t *testing.T) {
 
 	mapCtx.SetSpec(specDef{})
 
-	InitialNodes := mapCtx.GetNodeWithInterconnection(53.35214, -6.25866, specDef{})
+	InitialNodes := mapCtx.GetNodeWithInterconnection(53.3630144, -6.2584680, specDef{})
 
 	for _, v := range InitialNodes {
 		node := v.(*NodeImpl)
 		println(node.FeatureID().String())
 	}
 
-	InitialNodesF := mapCtx.GetNodeWithInterconnection(53.36135, -6.23813, specDef{})
+	InitialNodesF := mapCtx.GetNodeWithInterconnection(53.3918925, -6.2463432, specDef{})
 
 	for _, v := range InitialNodesF {
 		node := v.(*NodeImpl)
@@ -134,6 +135,7 @@ func TestMapCtx_TryRouteWithBus(t *testing.T) {
 					ok = true
 				}
 				_ = inforela
+				fid = inforela.FeatureID().String()
 			}
 			println("via:", fid)
 		}

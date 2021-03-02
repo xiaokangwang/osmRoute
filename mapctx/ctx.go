@@ -96,7 +96,7 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 
 	//For Bus stop, we allow user to wrap to a nearby location
 	if spec.CanPublicTransport() && fromNode.Tags.Find("bus") == "yes" {
-		nodes := c.GetNodeWithInterconnection4(fromNode.Lat, fromNode.Lon, specProxyNoBus{spec}, 2)
+		nodes := c.GetNodeWithInterconnection4(fromNode.Lat, fromNode.Lon, specProxyNoBus{spec}, 3)
 
 		if len(nodes) > 0 {
 			for _, node := range nodes[:1] {
