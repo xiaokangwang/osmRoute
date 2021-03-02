@@ -32,15 +32,3 @@ func CreateIndexDb(mapPath string, db *badger.DB) {
 
 	_ = newMap.ConstructIndexSecondPass(mapPath, mapCtx)
 }
-
-func GetMapFromDir(dbDir string) *mapindex.Map {
-	logger := log.WithField("module", "database")
-	opts := badger.DefaultOptions(dbDir)
-	opts.Logger = logger
-	db, err := badger.Open(opts)
-	if err != nil {
-		panic(err)
-	}
-	newMap := mapindex.NewMap(db)
-	return newMap
-}

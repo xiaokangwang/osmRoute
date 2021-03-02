@@ -3,6 +3,7 @@ package adm
 import (
 	"github.com/paulmach/osm"
 	"github.com/stretchr/testify/assert"
+	"github.com/xiaokangwang/osmRoute/admcommon"
 	"github.com/xiaokangwang/osmRoute/util"
 	"os"
 	"testing"
@@ -18,7 +19,7 @@ func TestCreateIndex(t *testing.T) {
 }
 
 func TestEnumEntity(t *testing.T) {
-	mapinde := GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	outo, oute, _ := mapinde.ScanRegion(53.3532, -6.2598, 4)
 	println("%v", len(outo))
 	for _, v := range oute {
@@ -27,7 +28,7 @@ func TestEnumEntity(t *testing.T) {
 }
 
 func TestGetID(t *testing.T) {
-	mapinde := GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
@@ -39,7 +40,7 @@ func TestGetID(t *testing.T) {
 }
 
 func TestGetID2(t *testing.T) {
-	mapinde := GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
@@ -51,7 +52,7 @@ func TestGetID2(t *testing.T) {
 }
 
 func TestGetRelation(t *testing.T) {
-	mapinde := GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	outo := mapinde.GetRelationByFeature("node/990208736")
 	for _, v := range outo {
 		println(v.String())
@@ -60,7 +61,7 @@ func TestGetRelation(t *testing.T) {
 }
 
 func TestGetRelation2(t *testing.T) {
-	mapinde := GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	outo := mapinde.GetRelationByFeature("node/3451922931")
 	for _, v := range outo {
 		println(v.String())
@@ -69,7 +70,7 @@ func TestGetRelation2(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	mapinde := GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	outo, _ := mapinde.SearchByName("Sean MacDermott Street Lower")
 	for _, v := range outo {
 		println(v.String())
@@ -78,7 +79,7 @@ func TestSearch(t *testing.T) {
 }
 
 func TestSearchPrefix(t *testing.T) {
-	mapinde := GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	outo := mapinde.SearchByNamePrefix("Sean MacDermott")
 	for _, v := range outo {
 		println(v)

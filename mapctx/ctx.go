@@ -178,12 +178,19 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 			routevalue := inforela.Tags.Find("route")
 
 			if routevalue == "bus" {
-				if member, errw := checkIntersectionAssociation(inforela.Members, associatedNodeID); errw != nil {
+				if member, errw := checkIntersectionAssociation(inforela.Members, associatedNodeID); errw == nil {
 					//OK, now generate a route for all other stations
 					startexact := (*c.ResolveInfoFromID(member.FeatureID().String())).(*osm.Node)
 					for _, memberw := range inforela.Members {
-						ending := (*c.ResolveInfoFromID(memberw.FeatureID().String())).(*osm.Node)
-						ret = append(ret, c.NewConnection4(fromNode, startexact, ending, *info))
+						switch memberw.Role {
+						case "platform":
+							fallthrough
+						case "platform_exit_only":
+							ending := (*c.ResolveInfoFromID(memberw.FeatureID().String())).(*osm.Node)
+							connection := c.NewConnection5(fromNode, startexact, ending, *info, 1)
+							_ = connection
+							ret = append(ret, connection)
+						}
 					}
 
 				}
@@ -197,7 +204,12 @@ func checkIntersectionAssociation(relationMember osm.Members, candidate osm.Feat
 	for _, v := range relationMember {
 		for _, v2 := range candidate {
 			if v.FeatureID() == v2 && strings.HasPrefix(v.Role, "platform") {
-				return v, nil
+				switch v.Role {
+				case "platform":
+					fallthrough
+				case "platform_exit_only":
+					return v, nil
+				}
 			}
 		}
 	}
@@ -259,10 +271,11 @@ func (n NodeImpl) FindConnection(spec ConnectionSpec) []Connection {
 }
 
 type ConnectionImpl struct {
-	from      Node
-	to        Node
-	via       osm.Object
-	fromExact Node
+	from         Node
+	to           Node
+	via          osm.Object
+	fromExact    Node
+	costDiscount float64
 }
 
 func (c ConnectionImpl) From() Node {
@@ -279,23 +292,25 @@ func (c ConnectionImpl) Via() osm.Object {
 
 func (c ConnectionImpl) GetCost() float64 {
 
-	return util.GPStoMeter(c.from.(*NodeImpl).Lat, c.from.(*NodeImpl).Lon, c.to.(*NodeImpl).Lat, c.to.(*NodeImpl).Lon)
+	return util.GPStoMeter(c.from.(*NodeImpl).Lat, c.from.(*NodeImpl).Lon, c.to.(*NodeImpl).Lat, c.to.(*NodeImpl).Lon) * c.costDiscount
 }
 
 func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
 	return ConnectionImpl{
-		from: c.GetNodeFromOSMNode(from),
-		to:   c.GetNodeFromOSMNode(to),
-		via:  via,
+		from:         c.GetNodeFromOSMNode(from),
+		to:           c.GetNodeFromOSMNode(to),
+		via:          via,
+		costDiscount: 1,
 	}
 }
 
-func (c *MapCtx) NewConnection4(from, to, exact *osm.Node, via osm.Object) Connection {
+func (c *MapCtx) NewConnection5(from, to, exact *osm.Node, via osm.Object, discount float64) Connection {
 	return ConnectionImpl{
-		from:      c.GetNodeFromOSMNode(from),
-		to:        c.GetNodeFromOSMNode(to),
-		via:       via,
-		fromExact: c.GetNodeFromOSMNode(exact),
+		from:         c.GetNodeFromOSMNode(from),
+		to:           c.GetNodeFromOSMNode(to),
+		via:          via,
+		fromExact:    c.GetNodeFromOSMNode(exact),
+		costDiscount: discount,
 	}
 }
 

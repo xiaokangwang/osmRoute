@@ -4,7 +4,7 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/paulmach/osm"
 	"github.com/stretchr/testify/assert"
-	"github.com/xiaokangwang/osmRoute/adm"
+	"github.com/xiaokangwang/osmRoute/admcommon"
 	"github.com/xiaokangwang/osmRoute/util"
 	"os"
 	"reflect"
@@ -27,7 +27,7 @@ func (s specDef) CanPublicTransport() bool {
 }
 
 func TestMapCtx_ListRoutes(t *testing.T) {
-	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
@@ -43,7 +43,7 @@ func TestMapCtx_ListRoutes(t *testing.T) {
 }
 
 func TestMapCtx_TryRoute(t *testing.T) {
-	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
@@ -91,7 +91,7 @@ func TestMapCtx_TryRoute(t *testing.T) {
 }
 
 func TestMapCtx_TryRouteWithBus(t *testing.T) {
-	mapinde := adm.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
+	mapinde := admcommon.GetMapFromDir(util.GetBaseDirFromEnvironment() + "/testdb")
 	mapfile, err := os.Open(util.GetBaseDirFromEnvironment() + "/ireland.osm.pbf")
 	if err != nil {
 		panic(err)
