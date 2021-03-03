@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/xiaokangwang/osmRoute/admcommon"
 	"net"
 	"net/http"
 	"os"
@@ -23,7 +24,6 @@ import (
 	"github.com/paulmach/osm"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	"github.com/xiaokangwang/osmRoute/adm"
 	"github.com/xiaokangwang/osmRoute/mapctx"
 	"github.com/xiaokangwang/osmRoute/rpc"
 	"google.golang.org/grpc"
@@ -51,7 +51,7 @@ func main() {
 		),
 	)
 
-	mapinde := adm.GetMapFromDir(path.Join(util.GetBaseDirFromEnvironment(), "testdb"))
+	mapinde := admcommon.GetMapFromDir(path.Join(util.GetBaseDirFromEnvironment(), "testdb"))
 	mapfile, err := os.Open(path.Join(util.GetBaseDirFromEnvironment(), "ireland.osm.pbf"))
 	if err != nil {
 		panic(err)
