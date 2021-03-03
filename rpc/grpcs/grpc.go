@@ -122,7 +122,7 @@ func (s specDef) CanDrive() bool {
 }
 
 func (s specDef) CanPublicTransport() bool {
-	panic("implement me")
+	return true
 }
 
 func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*rpc.RoutingDecisionResp, error) {
