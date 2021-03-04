@@ -5,10 +5,11 @@ go 1.15
 require (
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/dgraph-io/badger/v3 v3.2011.1 // indirect
+	github.com/dgraph-io/badger/v3 v3.2011.1
 	github.com/fxamacker/cbor v1.5.1
 	github.com/go-chi/chi v1.5.1
 	github.com/golang/protobuf v1.4.3
+	github.com/google/go-cmp v0.5.0
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -20,7 +21,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/sirupsen/logrus v1.7.0
-	github.com/stretchr/testify v1.5.1 // indirect
+	github.com/stretchr/testify v1.5.1
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
