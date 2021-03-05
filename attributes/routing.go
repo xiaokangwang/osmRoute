@@ -16,7 +16,7 @@ func CheckRoutingInputAttribute(AdditionalInfo map[string]string) error {
 					key, " as it have a value of ", value,
 					" however, it is supposed to be a float").Base(err)
 			}
-			if floatValue > 1 || floatValue < 0 {
+			if !(floatValue < 1 && floatValue > 0) {
 				return newError("validation failed for condition ",
 					key, " as it have a value of ", value,
 					" however, it is supposed to be [0,1]")
