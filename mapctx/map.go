@@ -22,4 +22,8 @@ type ConnectionSpec interface {
 	CanWalk() bool
 	CanDrive() bool
 	CanPublicTransport() bool
+
+	TimeFactor() float64
+	CostFactor() float64
+	SustainableFactor() float64
 }

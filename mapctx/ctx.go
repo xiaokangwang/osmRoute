@@ -180,8 +180,16 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 			wayTo := (*c.ResolveInfoFromID(infoway.Nodes[len(infoway.Nodes)-1].FeatureID().String())).(*osm.Node)
 
 			if (CanCarUse && spec.CanDrive()) || (CanPedestriansUse && spec.CanWalk()) {
-				ret = append(ret, c.NewConnection(fromNode, wayFrom, *info))
-				ret = append(ret, c.NewConnection(fromNode, wayTo, *info))
+				if CanPedestriansUse {
+					ret = append(ret, c.NewConnection5(fromNode, wayFrom, nil, *info, c.GetRouteFactor("walk")))
+
+					ret = append(ret, c.NewConnection5(fromNode, wayTo, nil, *info, c.GetRouteFactor("walk")))
+				}
+				if CanCarUse {
+					ret = append(ret, c.NewConnection5(fromNode, wayFrom, nil, *info, c.GetRouteFactor("drive")))
+
+					ret = append(ret, c.NewConnection5(fromNode, wayTo, nil, *info, c.GetRouteFactor("drive")))
+				}
 
 				//If there is an seen node, we will generate a route even if it is not the starting or ending
 
@@ -210,7 +218,7 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 							fallthrough
 						case "platform_exit_only":
 							ending := (*c.ResolveInfoFromID(memberw.FeatureID().String())).(*osm.Node)
-							connection := c.NewConnection5(fromNode, startexact, ending, *info, 0.001)
+							connection := c.NewConnection5(fromNode, startexact, ending, *info, c.GetRouteFactor("public"))
 							_ = connection
 							ret = append(ret, connection)
 						}
@@ -308,6 +316,7 @@ type ConnectionImpl struct {
 	via          osm.Object
 	fromExact    Node
 	costDiscount float64
+	method       string
 }
 
 func (c ConnectionImpl) From() Node {
@@ -338,12 +347,33 @@ func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
 
 func (c *MapCtx) NewConnection5(from, to, exact *osm.Node, via osm.Object, discount float64) Connection {
 	return ConnectionImpl{
-		from:         c.GetNodeFromOSMNode(from),
-		to:           c.GetNodeFromOSMNode(to),
-		via:          via,
-		fromExact:    c.GetNodeFromOSMNode(exact),
+		from: c.GetNodeFromOSMNode(from),
+		to:   c.GetNodeFromOSMNode(to),
+		via:  via,
+		fromExact: func() Node {
+			if exact == nil {
+				return nil
+			}
+			return c.GetNodeFromOSMNode(exact)
+		}(),
 		costDiscount: discount,
 	}
+}
+
+func (c *MapCtx) GetRouteFactor(name string) float64 {
+	switch name {
+	case "drive":
+		return c.GetRouteFactor3(1, 3, 1)
+	case "walk":
+		return c.GetRouteFactor3(3, 1, 3)
+	case "public":
+		return c.GetRouteFactor3(2, 2, 3)
+	}
+	panic("unexpected")
+}
+
+func (c *MapCtx) GetRouteFactor3(time, cost, sustainable float64) float64 {
+	return (time / (1 + c.spec.TimeFactor())) + (cost / (1 + c.spec.CostFactor())) + (sustainable / (1 + c.spec.SustainableFactor()))
 }
 
 type NodeDistanceSlice struct {

@@ -9,7 +9,6 @@ import (
 func GetMapFromDir(dbDir string) *mapindex.Map {
 	logger := logrus.WithField("module", "database")
 	opts := badger.DefaultOptions(dbDir)
-	opts.MemTableSize = 4 << 20
 	opts.Logger = logger
 	db, err := badger.Open(opts)
 	if err != nil {

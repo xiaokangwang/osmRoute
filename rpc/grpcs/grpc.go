@@ -113,6 +113,18 @@ type RouteService struct {
 type specDef struct {
 }
 
+func (s specDef) TimeFactor() float64 {
+	return 1
+}
+
+func (s specDef) CostFactor() float64 {
+	return 1
+}
+
+func (s specDef) SustainableFactor() float64 {
+	return 1
+}
+
 func (s specDef) CanWalk() bool {
 	return false
 }
