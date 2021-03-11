@@ -1,7 +1,8 @@
 syntax = "proto3";
 package rpc;
-
 option  go_package = "github.com/xiaokangwang/osmRoute/rpc";
+option java_package = "ie.tcd.cs7cs3.wayfinding.server.rpc";
+option java_multiple_files = true;
 
 message ObjectResolveRequest {
   string FeatureID = 1;
