@@ -81,6 +81,9 @@ github.com/improbable-eng/grpc-web/go/grpcweb
 # github.com/jnewmano/grpc-json-proxy v0.0.2
 ## explicit
 github.com/jnewmano/grpc-json-proxy/codec
+# github.com/joho/godotenv v1.3.0
+## explicit
+github.com/joho/godotenv
 # github.com/kr/pretty v0.2.0
 ## explicit
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
@@ -135,7 +138,6 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
 # golang.org/x/net v0.0.0-20201021035429-f5854403a974
-## explicit
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2

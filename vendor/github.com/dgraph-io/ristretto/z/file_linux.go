@@ -23,7 +23,7 @@ import (
 // Truncate would truncate the mmapped file to the given size. On Linux, we truncate
 // the underlying file and then call mremap, but on other systems, we unmap first,
 // then truncate, then re-map.
-func (m *MmapFile) TruncateW(maxSz int64) error {
+func (m *MmapFile) Truncate(maxSz int64) error {
 	if err := m.Sync(); err != nil {
 		return fmt.Errorf("while sync file: %s, error: %v\n", m.Fd.Name(), err)
 	}

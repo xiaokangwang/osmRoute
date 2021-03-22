@@ -15,6 +15,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/jnewmano/grpc-json-proxy v0.0.2
+	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/paulmach/osm v0.1.1
@@ -22,7 +23,6 @@ require (
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.5.1
-	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	modernc.org/sortutil v1.1.0

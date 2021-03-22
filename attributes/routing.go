@@ -21,6 +21,8 @@ func CheckRoutingInputAttribute(AdditionalInfo map[string]string) error {
 					key, " as it have a value of ", value,
 					" however, it is supposed to be [0,1]")
 			}
+		case "can_publictrans":
+			fallthrough
 		case "can_walkLong":
 			fallthrough
 		case "can_drive":
