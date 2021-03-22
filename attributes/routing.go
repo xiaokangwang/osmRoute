@@ -33,6 +33,11 @@ func CheckRoutingInputAttribute(AdditionalInfo map[string]string) error {
 					key, " as it have a value of ", value,
 					" however, it is supposed to be boolean")
 			}
+		case "area_to_avoid":
+			_, err := NewAreaToAvoid(value)
+			if err != nil {
+				return newError("Cannot accept value for area to avoid: ").Base(err)
+			}
 		default:
 			return newError("validation failed for condition ",
 				key, " as it have a value of ", value,

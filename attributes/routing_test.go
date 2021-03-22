@@ -1,6 +1,7 @@
 package attributes
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -295,4 +296,32 @@ func TestCheckRoutingInputAttribute(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAreaToAvoid(t *testing.T) {
+	item, err := NewAreaToAvoid(`{"Items":[{"T":1, "B":0, "L":0, "R":1}]}`)
+	_ = item
+	assert.Nil(t, err)
+
+	t.Run("Check 0.5, 0.5", func(t *testing.T) {
+		ret := item.CheckPointInclusion(0.5, 0.5)
+		assert.True(t, ret)
+	})
+
+	t.Run("Check 1.5, 0.5", func(t *testing.T) {
+		ret := item.CheckPointInclusion(1.5, 0.5)
+		assert.False(t, ret)
+	})
+	t.Run("Check -1.5, 0.5", func(t *testing.T) {
+		ret := item.CheckPointInclusion(-1.5, 0.5)
+		assert.False(t, ret)
+	})
+	t.Run("Check -1.5, -0.5", func(t *testing.T) {
+		ret := item.CheckPointInclusion(-1.5, 0.5)
+		assert.False(t, ret)
+	})
+	t.Run("Check -1.5, -1.5", func(t *testing.T) {
+		ret := item.CheckPointInclusion(-1.5, 0.5)
+		assert.False(t, ret)
+	})
 }

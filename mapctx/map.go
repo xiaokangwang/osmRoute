@@ -27,3 +27,8 @@ type ConnectionSpec interface {
 	CostFactor() float64
 	SustainableFactor() float64
 }
+
+type ConnectionSpecAreaToAvoid interface {
+	ConnectionSpec
+	CheckPointExclusion(lat, lon float64) bool
+}

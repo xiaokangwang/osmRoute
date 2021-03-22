@@ -80,6 +80,10 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 
 	fromNode := (*c.ResolveInfoFromID(FeaID)).(*osm.Node)
 
+	if scav, ok := spec.(ConnectionSpecAreaToAvoid); ok && scav.CheckPointExclusion(fromNode.Lat, fromNode.Lon) {
+		return ret
+	}
+
 	relations := c.GetRelationByFeature(FeaID)
 	ret = c.CreateInterconnections(relations, spec, ret, fromNode, []osm.FeatureID{})
 
@@ -181,14 +185,22 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 
 			if (CanCarUse && spec.CanDrive()) || (CanPedestriansUse && spec.CanWalk()) {
 				if CanPedestriansUse {
-					ret = append(ret, c.NewConnection5(fromNode, wayFrom, nil, *info, c.GetRouteFactor("walk")))
+					ret = append(ret, c.NewConnection5(fromNode, wayFrom, nil, *info, c.GetRouteFactor("walk")).(*ConnectionImpl).SetAttributes(map[string]string{
+						"method": "walk",
+					}).CalcAttribute())
 
-					ret = append(ret, c.NewConnection5(fromNode, wayTo, nil, *info, c.GetRouteFactor("walk")))
+					ret = append(ret, c.NewConnection5(fromNode, wayTo, nil, *info, c.GetRouteFactor("walk")).(*ConnectionImpl).SetAttributes(map[string]string{
+						"method": "walk",
+					}).CalcAttribute())
 				}
 				if CanCarUse {
-					ret = append(ret, c.NewConnection5(fromNode, wayFrom, nil, *info, c.GetRouteFactor("drive")))
+					ret = append(ret, c.NewConnection5(fromNode, wayFrom, nil, *info, c.GetRouteFactor("drive")).(*ConnectionImpl).SetAttributes(map[string]string{
+						"method": "car",
+					}).CalcAttribute())
 
-					ret = append(ret, c.NewConnection5(fromNode, wayTo, nil, *info, c.GetRouteFactor("drive")))
+					ret = append(ret, c.NewConnection5(fromNode, wayTo, nil, *info, c.GetRouteFactor("drive")).(*ConnectionImpl).SetAttributes(map[string]string{
+						"method": "car",
+					}).CalcAttribute())
 				}
 
 				//If there is an seen node, we will generate a route even if it is not the starting or ending
@@ -218,7 +230,9 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 							fallthrough
 						case "platform_exit_only":
 							ending := (*c.ResolveInfoFromID(memberw.FeatureID().String())).(*osm.Node)
-							connection := c.NewConnection5(fromNode, startexact, ending, *info, c.GetRouteFactor("public"))
+							connection := c.NewConnection5(fromNode, startexact, ending, *info, c.GetRouteFactor("public")).(*ConnectionImpl).SetAttributes(map[string]string{
+								"method": "public",
+							}).CalcAttribute()
 							_ = connection
 							ret = append(ret, connection)
 						}
@@ -317,6 +331,7 @@ type ConnectionImpl struct {
 	fromExact    Node
 	costDiscount float64
 	method       string
+	attributes   map[string]string
 }
 
 func (c ConnectionImpl) From() Node {
@@ -334,6 +349,16 @@ func (c ConnectionImpl) Via() osm.Object {
 func (c ConnectionImpl) GetCost() float64 {
 
 	return util.GPStoMeter(c.from.(*NodeImpl).Lat, c.from.(*NodeImpl).Lon, c.to.(*NodeImpl).Lat, c.to.(*NodeImpl).Lon) * c.costDiscount
+}
+
+func (c *ConnectionImpl) SetAttributes(attr map[string]string) *ConnectionImpl {
+	c.attributes = attr
+	return c
+}
+
+func (c *ConnectionImpl) CalcAttribute() *ConnectionImpl {
+	//TODO
+	return c
 }
 
 func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
