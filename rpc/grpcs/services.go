@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/beefsack/go-astar"
 	"github.com/paulmach/osm"
+	log "github.com/sirupsen/logrus"
+	"github.com/xiaokangwang/osmRoute/attributes"
 	"github.com/xiaokangwang/osmRoute/mapctx"
 	"github.com/xiaokangwang/osmRoute/rpc"
 )
@@ -14,29 +17,50 @@ import (
 type RouteService struct {
 	rpc.UnimplementedRouteServiceServer
 	mapctx *mapctx.MapCtx
+	logger *log.Entry
 }
 
 func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*rpc.RoutingDecisionResp, error) {
 	var ret rpc.RoutingDecisionResp
+	var additionalInfo = req.GetAdditionalInfo()
+	spec, err := attributes.ParseRoutingInputAttribute(additionalInfo)
+	if err != nil {
+		ret.Code = -1
+		ret.Msg = fmt.Sprintf("%x", err)
+		return &ret, nil
+	}
 
-	r.mapctx.SetSpec(specDef{})
+	r.mapctx.SetSpec(spec)
 
-	InitialNodes := r.mapctx.GetNodeWithInterconnection(req.From.Lat, req.From.Lon, specDef{})
+	InitialNodes := r.mapctx.GetNodeWithInterconnection(req.From.Lat, req.From.Lon, spec)
 
 	for _, v := range InitialNodes {
 		node := v.(*mapctx.NodeImpl)
-		println(node.FeatureID().String())
+		r.logger.Debugln(node.FeatureID().String())
 	}
 
-	InitialNodesF := r.mapctx.GetNodeWithInterconnection(req.To.Lat, req.To.Lon, specDef{})
+	if len(InitialNodes) == 0 {
+		ret.Code = -2
+		ret.Msg = "InitialNodes length == 0"
+		return &ret, nil
+	}
+
+	InitialNodesF := r.mapctx.GetNodeWithInterconnection(req.To.Lat, req.To.Lon, spec)
 
 	for _, v := range InitialNodesF {
 		node := v.(*mapctx.NodeImpl)
-		println(node.FeatureID().String())
+		r.logger.Debugln(node.FeatureID().String())
 	}
+
+	if len(InitialNodesF) == 0 {
+		ret.Code = -3
+		ret.Msg = "InitialNodesF length == 0"
+		return &ret, nil
+	}
+
 	path, dist, found := astar.Path(InitialNodes[0], InitialNodesF[0])
-	println(found)
-	println(dist)
+	r.logger.Debugln(found)
+	r.logger.Debugln(dist)
 	var last astar.Pather
 	reverseAny(path)
 	for _, v := range path {
@@ -55,15 +79,17 @@ func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*
 				inforela := (ViaObject).(*osm.Relation)
 				_ = inforela
 			}
-			println("via:", fid)
+			r.logger.Debugln("via:", fid)
 			hop.Via = fid
 		}
-		println(v.(*mapctx.NodeImpl).FeatureID().String())
+		r.logger.Debugln(v.(*mapctx.NodeImpl).FeatureID().String())
 		last = v
 		hop.From = v.(*mapctx.NodeImpl).FeatureID().String()
 
 		ret.Hops = append(ret.Hops, &hop)
 	}
+	ret.Code = 0
+	ret.Msg = "Success"
 	return &ret, nil
 }
 
@@ -127,7 +153,7 @@ func (r RouteService) Resolve(ctx context.Context, request *rpc.ObjectResolveReq
 		if err != nil {
 			panic(err)
 		}
-		println(string(by))
+		r.logger.Debugln(string(by))
 		return &rpc.ReturnedObject{
 			FeatureID:     request.FeatureID,
 			ObjectContent: by,
@@ -139,7 +165,7 @@ func (r RouteService) Resolve(ctx context.Context, request *rpc.ObjectResolveReq
 		if err != nil {
 			panic(err)
 		}
-		println(string(by))
+		r.logger.Debugln(string(by))
 		return &rpc.ReturnedObject{
 			FeatureID:     request.FeatureID,
 			ObjectContent: by,
@@ -218,7 +244,7 @@ func (r RouteService) SearchByNameExact(ctx context.Context, search *rpc.NameSea
 	keywordPrefix := search.Keyword
 	results, _ := r.mapctx.SearchByName(keywordPrefix)
 	for _, v := range results {
-		println(v.String())
+		r.logger.Debugln(v.String())
 	}
 	return &rpc.ObjectList{FeatureID: func() []string {
 		var ret []string

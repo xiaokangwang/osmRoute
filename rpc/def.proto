@@ -56,6 +56,8 @@ message RoutingDecision {
 
 message RoutingDecisionResp {
   repeated RoutingDecision Hops = 1;
+  int32 code = 2;
+  string msg = 3;
 }
 
 message RoutingDecisionReq {

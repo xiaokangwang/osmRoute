@@ -1,8 +1,9 @@
-package main
+package attributes
 
 type specDef struct {
 	timeFactor, costFactor, sustainableFactor      float64
 	canWalk, canDrive, canBike, canPublicTransport bool
+	areaToAvoid                                    AreaToAvoid
 }
 
 func (s specDef) TimeFactor() float64 {

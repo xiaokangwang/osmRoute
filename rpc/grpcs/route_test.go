@@ -19,7 +19,7 @@ var gRPClient rpc.RouteServiceClient
 
 func TestRouteSpecs(t *testing.T) {
 	opt := grpc.WaitForReady(true)
-	_, err := gRPClient.Route(context.Background(), &rpc.RoutingDecisionReq{
+	rpl, err := gRPClient.Route(context.Background(), &rpc.RoutingDecisionReq{
 		From: &rpc.RoutingDecisionReqLocation{Lat: 53.35214, Lon: -6.25866},
 		To:   &rpc.RoutingDecisionReqLocation{Lat: 53.36135, Lon: -6.23813},
 		AdditionalInfo: map[string]string{
@@ -35,7 +35,9 @@ func TestRouteSpecs(t *testing.T) {
 	if err != nil {
 		t.Errorf("gRPClient return an error: %s", err)
 	}
-
+	if len(rpl.GetHops()) == 0 {
+		t.Errorf("No hops returned")
+	}
 }
 
 func TestMain(m *testing.M) {

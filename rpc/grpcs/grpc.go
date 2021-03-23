@@ -102,5 +102,5 @@ func main() {
 	}
 	mapCtx := mapctx.NewMapCtx(*mapinde, mapfile)
 
-	grpcInit(logger, &RouteService{mapctx: mapCtx})
+	grpcInit(logger, &RouteService{mapctx: mapCtx, logger: log.WithField("module", "services")})
 }

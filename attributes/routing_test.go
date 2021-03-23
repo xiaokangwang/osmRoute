@@ -1,11 +1,12 @@
 package attributes
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckRoutingInputAttribute(t *testing.T) {
+func TestParseRoutingInputAttribute(t *testing.T) {
 	type args struct {
 		AdditionalInfo map[string]string
 	}
@@ -291,8 +292,8 @@ func TestCheckRoutingInputAttribute(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CheckRoutingInputAttribute(tt.args.AdditionalInfo); (err != nil) != tt.wantErr {
-				t.Errorf("CheckRoutingInputAttribute() error = %v, wantErr %v", err, tt.wantErr)
+			if _, err := ParseRoutingInputAttribute(tt.args.AdditionalInfo); (err != nil) != tt.wantErr {
+				t.Errorf("ParseRoutingInputAttribute() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -332,7 +333,7 @@ func TestBusInfo(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestCheckRoutingInputAttribute2(t *testing.T) {
+func TestParseRoutingInputAttribute2(t *testing.T) {
 	type args struct {
 		AdditionalInfo map[string]string
 	}
@@ -353,8 +354,8 @@ func TestCheckRoutingInputAttribute2(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CheckRoutingInputAttribute(tt.args.AdditionalInfo); (err != nil) != tt.wantErr {
-				t.Errorf("CheckRoutingInputAttribute() error = %v, wantErr %v", err, tt.wantErr)
+			if _, err := ParseRoutingInputAttribute(tt.args.AdditionalInfo); (err != nil) != tt.wantErr {
+				t.Errorf("ParseRoutingInputAttribute() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
