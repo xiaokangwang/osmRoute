@@ -10,7 +10,7 @@ type BusInfoItem struct {
 }
 
 type BusInfo struct {
-	Times map[string]BusInfo
+	Info map[string]BusInfoItem
 }
 
 func NewBusInfo(input string) (BusInfo, error) {
