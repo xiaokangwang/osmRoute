@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -224,6 +225,13 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 				if member, errw := checkIntersectionAssociation(inforela.Members, associatedNodeID); errw == nil {
 					//OK, now generate a route for all other stations
 					startexact := (*c.ResolveInfoFromID(member.FeatureID().String())).(*osm.Node)
+
+					waittime := int64(600)
+
+					if specbus, ok := spec.(GetRemainingTimeForBus); ok {
+						waittime = specbus.WaitTime(startexact.FeatureID().String())
+					}
+
 					for _, memberw := range inforela.Members {
 						switch memberw.Role {
 						case "platform":
@@ -231,7 +239,8 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 						case "platform_exit_only":
 							ending := (*c.ResolveInfoFromID(memberw.FeatureID().String())).(*osm.Node)
 							connection := c.NewConnection5(fromNode, startexact, ending, *info, c.GetRouteFactor("public")).(*ConnectionImpl).SetAttributes(map[string]string{
-								"method": "public",
+								"method":   "public",
+								"waittime": strconv.Itoa(int(waittime)),
 							}).CalcAttribute()
 							_ = connection
 							ret = append(ret, connection)
