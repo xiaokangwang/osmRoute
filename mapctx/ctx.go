@@ -341,6 +341,7 @@ type ConnectionImpl struct {
 	costDiscount float64
 	method       string
 	attributes   map[string]string
+	spec         ConnectionSpec
 }
 
 func (c ConnectionImpl) From() Node {
@@ -376,6 +377,7 @@ func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
 		to:           c.GetNodeFromOSMNode(to),
 		via:          via,
 		costDiscount: 1,
+		spec:         c.spec,
 	}
 }
 
@@ -391,6 +393,7 @@ func (c *MapCtx) NewConnection5(from, to, exact *osm.Node, via osm.Object, disco
 			return c.GetNodeFromOSMNode(exact)
 		}(),
 		costDiscount: discount,
+		spec:         c.spec,
 	}
 }
 
