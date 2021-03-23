@@ -6,7 +6,7 @@ import (
 )
 
 type BusInfoItem struct {
-	RemainingTime string
+	RemainingTime int64
 }
 
 type BusInfo struct {
@@ -23,4 +23,11 @@ func NewBusInfo(input string) (BusInfo, error) {
 		return BusInfo{}, newError("Cannot unwrap input").Base(err)
 	}
 	return bus, nil
+}
+
+func (b BusInfo) WaitTime(NodeFID string) int64 {
+	if data, ok := b.Info[NodeFID]; ok {
+		return data.RemainingTime
+	}
+	return 600
 }
