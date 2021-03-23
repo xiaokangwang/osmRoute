@@ -358,7 +358,12 @@ func (c ConnectionImpl) Via() osm.Object {
 
 func (c ConnectionImpl) GetCost() float64 {
 
-	return util.GPStoMeter(c.from.(*NodeImpl).Lat, c.from.(*NodeImpl).Lon, c.to.(*NodeImpl).Lat, c.to.(*NodeImpl).Lon) * c.costDiscount
+	return c.GetLength()*c.costDiscount +
+		c.CalcTimeFactor()
+}
+
+func (c ConnectionImpl) GetLength() float64 {
+	return util.GPStoMeter(c.from.(*NodeImpl).Lat, c.from.(*NodeImpl).Lon, c.to.(*NodeImpl).Lat, c.to.(*NodeImpl).Lon)
 }
 
 func (c *ConnectionImpl) SetAttributes(attr map[string]string) *ConnectionImpl {
@@ -367,8 +372,35 @@ func (c *ConnectionImpl) SetAttributes(attr map[string]string) *ConnectionImpl {
 }
 
 func (c *ConnectionImpl) CalcAttribute() *ConnectionImpl {
-	//TODO
+	var co2, time float64
+	length := c.GetLength()
+	factor := float64(0)
+	switch c.attributes["method"] {
+	case "public":
+		factor = 0.10471
+	case "walk":
+		factor = 0
+	case "car":
+		factor = 0.17061
+	}
+	co2 = factor * length
+	//unit 10^-9 (nanosecond)
+	time = ((0.17061 - factor) * length) / (49.36)
+	c.attributes["co2_footprint"] = strconv.FormatFloat(co2, 'E', 10, 64)
+	c.attributes["time_saved_for_humanity"] = strconv.FormatFloat(time, 'E', 10, 64)
 	return c
+}
+
+func (c ConnectionImpl) CalcTimeFactor() float64 {
+	switch c.attributes["method"] {
+	case "public":
+		if s, ok := c.attributes["waittime"]; ok {
+			if i, err := strconv.ParseInt(s, 10, 64); err != nil {
+				return float64(i) / 20 * c.spec.TimeFactor()
+			}
+		}
+	}
+	return 0
 }
 
 func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
