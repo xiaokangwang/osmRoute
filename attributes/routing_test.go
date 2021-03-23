@@ -325,3 +325,9 @@ func TestAreaToAvoid(t *testing.T) {
 		assert.False(t, ret)
 	})
 }
+
+func TestBusInfo(t *testing.T) {
+	item, err := NewBusInfo(`{"Info":["node/1234567":{"RemainingTime":"2"}]}`)
+	_ = item
+	assert.Nil(t, err)
+}
