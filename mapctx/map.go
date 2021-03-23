@@ -32,3 +32,10 @@ type ConnectionSpecAreaToAvoid interface {
 	ConnectionSpec
 	CheckPointExclusion(lat, lon float64) bool
 }
+
+type GetRemainingTimeForBus interface {
+	ConnectionSpec
+	// CheckPointExclusion return wait time value in second
+	// station is the FeatureID of the bus stop in question
+	WaitTime(station string) int64
+}
