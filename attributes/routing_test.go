@@ -327,7 +327,35 @@ func TestAreaToAvoid(t *testing.T) {
 }
 
 func TestBusInfo(t *testing.T) {
-	item, err := NewBusInfo(`{"Info":["node/1234567":{"RemainingTime":"2"}]}`)
+	item, err := NewBusInfo(`{"Info":{"node/1234567":{"RemainingTime":"2"}}}`)
 	_ = item
 	assert.Nil(t, err)
+}
+
+func TestCheckRoutingInputAttribute2(t *testing.T) {
+	type args struct {
+		AdditionalInfo map[string]string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "area to avoid",
+			wantErr: false,
+			args: struct{ AdditionalInfo map[string]string }{AdditionalInfo: func() map[string]string {
+				m := make(map[string]string)
+				m["area_to_avoid"] = `{"Items":[{"T":1, "B":0, "L":0, "R":1}]}`
+				return m
+			}()},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := CheckRoutingInputAttribute(tt.args.AdditionalInfo); (err != nil) != tt.wantErr {
+				t.Errorf("CheckRoutingInputAttribute() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }
