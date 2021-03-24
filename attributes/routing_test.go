@@ -360,3 +360,7 @@ func TestParseRoutingInputAttribute2(t *testing.T) {
 		})
 	}
 }
+
+func TestBikeStation_ListAllRoutes(t *testing.T) {
+	(&BikeStation{}).ListAllRoutes()
+}
