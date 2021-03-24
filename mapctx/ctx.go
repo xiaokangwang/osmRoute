@@ -85,6 +85,8 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 		return ret
 	}
 
+	//Now Check If there is a bike route
+
 	relations := c.GetRelationByFeature(FeaID)
 	ret = c.CreateInterconnections(relations, spec, ret, fromNode, []osm.FeatureID{})
 
@@ -414,7 +416,7 @@ func (c *MapCtx) NewConnection(from, to *osm.Node, via osm.Object) Connection {
 }
 
 func (c *MapCtx) NewConnection5(from, to, exact *osm.Node, via osm.Object, discount float64) Connection {
-	return ConnectionImpl{
+	return &ConnectionImpl{
 		from: c.GetNodeFromOSMNode(from),
 		to:   c.GetNodeFromOSMNode(to),
 		via:  via,
