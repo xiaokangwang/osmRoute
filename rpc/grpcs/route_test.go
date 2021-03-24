@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic(err)
 		}
-		grpcInit(logger, &RouteService{mapctx: mapctx.NewMapCtx(*mapinde, mapfile)})
+		grpcInit(logger, &RouteService{mapctx: mapctx.NewMapCtx(*mapinde, mapfile), logger: log.WithField("module", "services")})
 	}()
 
 	gRPClient = rpc.NewRouteServiceClient(gRPClientSetup("localhost:9001"))
