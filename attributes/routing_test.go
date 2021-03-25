@@ -1,6 +1,7 @@
 package attributes
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -362,5 +363,10 @@ func TestParseRoutingInputAttribute2(t *testing.T) {
 }
 
 func TestBikeStation_ListAllRoutes(t *testing.T) {
-	(&BikeStation{}).ListAllRoutes()
+	d, err := os.ReadFile("../testing/bike.json")
+	assert.Nil(t, err)
+	s, err := NewBikeStationData(string(d))
+	assert.Nil(t, err)
+	w := s.ListAllStations()
+	assert.Len(t, w, 105)
 }
