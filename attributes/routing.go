@@ -69,6 +69,16 @@ func ParseRoutingInputAttribute(AdditionalInfo map[string]string) (*specDef, err
 				return nil, newError("Cannot accept value for area to avoid: ").Base(err)
 			}
 			ret.areaToAvoid = areaValue
+		case "bike":
+			_, err := NewBikeStationData(value)
+			if err != nil {
+				return nil, newError("Cannot accept value for area to avoid: ").Base(err)
+			}
+		case "bus":
+			_, err := NewBusInfo(value)
+			if err != nil {
+				return nil, newError("Cannot accept value for area to avoid: ").Base(err)
+			}
 		default:
 			return nil, newError("validation failed for condition ",
 				key, " as it have a value of ", value,
