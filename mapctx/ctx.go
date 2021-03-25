@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/beefsack/go-astar"
 	"github.com/paulmach/osm"
+	"github.com/xiaokangwang/osmRoute/interfacew"
 	"github.com/xiaokangwang/osmRoute/mapindex"
 	"github.com/xiaokangwang/osmRoute/util"
 	"math"
@@ -112,6 +113,10 @@ func (c MapCtx) ListRoutes(FeaID string, spec ConnectionSpec) []Connection {
 		}
 	}
 
+	//Create bike interconnections
+
+	ret = c.CreateBikeInterconnections(spec, ret, fromNode)
+
 	return ret
 }
 
@@ -121,6 +126,33 @@ type specProxyNoBus struct {
 
 func (s specProxyNoBus) CanPublicTransport() bool {
 	return false
+}
+
+func (c MapCtx) CreateBikeInterconnections(spec ConnectionSpec, ret []Connection, fromNode *osm.Node) []Connection {
+	if station, ok := spec.(interfacew.BikeStation); ok {
+		stations := station.ListAllStations()
+		//In the first pass, we find the nearest station
+		if len(stations) == 0 {
+			return ret
+		}
+		sort.Sort(&MapLocationDistanceSlice{
+			nodes:     stations,
+			OriginLat: fromNode.Lat,
+			OriginLon: fromNode.Lon,
+		})
+		distance := util.GPStoMeter(fromNode.Lat, fromNode.Lon, stations[0].Lat, stations[0].Lon)
+		if distance <= 500 {
+			_, _, loc := c.ScanRegion(stations[0].Lat, stations[0].Lon, 3)
+			if len(loc) >= 1 {
+				toNode := (*c.ResolveInfoFromID(loc[0].FeatureIDs[0].String())).(*osm.Node)
+				ret = append(ret, c.NewConnection5(fromNode, toNode, toNode, nil, c.GetRouteFactor("bike")).(*ConnectionImpl).SetAttributes(map[string]string{
+					"method": "bike",
+				}).CalcAttribute())
+			}
+		}
+	}
+
+	return ret
 }
 
 func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec ConnectionSpec, ret []Connection, fromNode *osm.Node, associatedNodeID osm.FeatureIDs) []Connection {
@@ -435,6 +467,8 @@ func (c *MapCtx) GetRouteFactor(name string) float64 {
 	switch name {
 	case "drive":
 		return c.GetRouteFactor3(1, 3, 1)
+	case "bike":
+		return c.GetRouteFactor3(2, 1, 3)
 	case "walk":
 		return c.GetRouteFactor3(3, 1, 3)
 	case "public":
@@ -486,3 +520,23 @@ func (p NodeGDistanceSlice) Less(i, j int) bool {
 }
 
 func (p NodeGDistanceSlice) Swap(i, j int) { p.nodes[i], p.nodes[j] = p.nodes[j], p.nodes[i] }
+
+type MapLocationDistanceSlice struct {
+	nodes     []interfacew.MapLocation
+	OriginLat float64
+	OriginLon float64
+}
+
+func (p MapLocationDistanceSlice) Len() int { return len(p.nodes) }
+
+func (p MapLocationDistanceSlice) Less(i, j int) bool {
+	iLon := p.nodes[i].Lon
+	iLat := p.nodes[i].Lat
+
+	jLon := p.nodes[j].Lon
+	jLat := p.nodes[j].Lat
+
+	return util.GPStoMeter(iLon, iLat, p.OriginLon, p.OriginLat) < util.GPStoMeter(jLon, jLat, p.OriginLon, p.OriginLat)
+}
+
+func (p MapLocationDistanceSlice) Swap(i, j int) { p.nodes[i], p.nodes[j] = p.nodes[j], p.nodes[i] }
