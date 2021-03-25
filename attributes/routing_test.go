@@ -370,3 +370,40 @@ func TestBikeStation_ListAllRoutes(t *testing.T) {
 	w := s.ListAllStations()
 	assert.Len(t, w, 105)
 }
+
+func TestParseRoutingInputAttribute3(t *testing.T) {
+	type args struct {
+		AdditionalInfo map[string]string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "bike information",
+			wantErr: false,
+			args: struct{ AdditionalInfo map[string]string }{AdditionalInfo: func() map[string]string {
+				m := make(map[string]string)
+				d, _ := os.ReadFile("../testing/bike.json")
+				m["bike"] = string(d)
+				return m
+			}()},
+		}, {
+			name:    "bus information",
+			wantErr: false,
+			args: struct{ AdditionalInfo map[string]string }{AdditionalInfo: func() map[string]string {
+				m := make(map[string]string)
+				m["bus"] = `{"Info":{"node/1234567":{"RemainingTime":2}}}`
+				return m
+			}()},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := ParseRoutingInputAttribute(tt.args.AdditionalInfo); (err != nil) != tt.wantErr {
+				t.Errorf("ParseRoutingInputAttribute() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
