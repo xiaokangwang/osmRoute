@@ -1,9 +1,13 @@
 package attributes
 
+import "github.com/xiaokangwang/osmRoute/interfacew"
+
 type specDef struct {
 	timeFactor, costFactor, sustainableFactor      float64
 	canWalk, canDrive, canBike, canPublicTransport bool
 	areaToAvoid                                    AreaToAvoid
+	bikeStations                                   BikeStation
+	busInfo                                        BusInfo
 }
 
 func (s specDef) TimeFactor() float64 {
@@ -32,4 +36,12 @@ func (s specDef) CanBike() bool {
 
 func (s specDef) CanPublicTransport() bool {
 	return s.canPublicTransport
+}
+
+func (s specDef) ListAllStations() []interfacew.MapLocation {
+	return s.bikeStations.ListAllStations()
+}
+
+func (s specDef) WaitTime(NodeFID string) int64 {
+	return s.busInfo.WaitTime(NodeFID)
 }
