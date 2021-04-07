@@ -244,7 +244,7 @@ func (c MapCtx) CreateInterconnections(relations osm.FeatureIDs, spec Connection
 					name := v.FeatureID().String()
 					if _, ok := c.mapNode[name]; ok {
 						SeenNode := (*c.ResolveInfoFromID(name)).(*osm.Node)
-						ret = append(ret, c.NewConnection(fromNode, SeenNode, *info))
+						ret = append(ret, c.NewConnection5(fromNode, SeenNode, nil, *info, 0.1))
 					}
 				}
 			}
