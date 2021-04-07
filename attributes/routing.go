@@ -12,6 +12,8 @@ func ParseRoutingInputAttribute(AdditionalInfo map[string]string) (*specDef, err
 		canBike:            true,
 		canPublicTransport: true,
 		areaToAvoid:        AreaToAvoid{},
+		bikeStations:       BikeStation{},
+		busInfo:            BusInfo{},
 	}
 
 	for key, value := range AdditionalInfo {
@@ -70,15 +72,17 @@ func ParseRoutingInputAttribute(AdditionalInfo map[string]string) (*specDef, err
 			}
 			ret.areaToAvoid = areaValue
 		case "bike":
-			_, err := NewBikeStationData(value)
+			bikeStations, err := NewBikeStationData(value)
 			if err != nil {
 				return nil, newError("Cannot accept value for area to avoid: ").Base(err)
 			}
+			ret.bikeStations = bikeStations
 		case "bus":
-			_, err := NewBusInfo(value)
+			busInfo, err := NewBusInfo(value)
 			if err != nil {
 				return nil, newError("Cannot accept value for area to avoid: ").Base(err)
 			}
+			ret.busInfo = busInfo
 		default:
 			return nil, newError("validation failed for condition ",
 				key, " as it have a value of ", value,
