@@ -78,9 +78,11 @@ func (r RouteService) Route(ctx context.Context, req *rpc.RoutingDecisionReq) (*
 			case osm.TypeRelation:
 				inforela := (ViaObject).(*osm.Relation)
 				_ = inforela
+				fid = inforela.FeatureID().String()
 			}
 			r.logger.Debugln("via:", fid)
 			hop.Via = fid
+			hop.AssociatedData = last.(*mapctx.NodeImpl).PathNeighborConnection(v).GetAttributes()
 		}
 		r.logger.Debugln(v.(*mapctx.NodeImpl).FeatureID().String())
 		last = v

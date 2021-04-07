@@ -353,7 +353,15 @@ func (n NodeImpl) PathNeighborVia(to astar.Pather) osm.Object {
 func (n NodeImpl) PathNeighborConnection(to astar.Pather) *ConnectionImpl {
 	for _, v := range n.cachedConn {
 		if v.To() == to {
-			return v.(*ConnectionImpl)
+			v_to := v
+			switch v_to.(type) {
+			case ConnectionImpl:
+				rs := v.(ConnectionImpl)
+				return &rs
+			case *ConnectionImpl:
+				return v.(*ConnectionImpl)
+			}
+
 		}
 	}
 	return nil
@@ -403,6 +411,10 @@ func (c ConnectionImpl) GetLength() float64 {
 func (c *ConnectionImpl) SetAttributes(attr map[string]string) *ConnectionImpl {
 	c.attributes = attr
 	return c
+}
+
+func (c *ConnectionImpl) GetAttributes() map[string]string {
+	return c.attributes
 }
 
 func (c *ConnectionImpl) CalcAttribute() *ConnectionImpl {
