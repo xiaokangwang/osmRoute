@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"path"
 	"testing"
@@ -38,6 +39,36 @@ func TestRouteSpecs(t *testing.T) {
 	if len(rpl.GetHops()) == 0 {
 		t.Errorf("No hops returned")
 	}
+}
+
+func TestRouteReturnAttrib(t *testing.T) {
+	opt := grpc.WaitForReady(true)
+	rpl, err := gRPClient.Route(context.Background(), &rpc.RoutingDecisionReq{
+		From: &rpc.RoutingDecisionReqLocation{Lat: 53.35214, Lon: -6.25866},
+		To:   &rpc.RoutingDecisionReqLocation{Lat: 53.36135, Lon: -6.23813},
+		AdditionalInfo: map[string]string{
+			"objective_time":        "0.33",
+			"objective_cost":        "0.33",
+			"objective_sustainable": "0.33",
+			"can_walkLong":          "true",
+			"can_drive":             "true",
+			"can_bike":              "true",
+			"can_publictrans":       "true",
+		},
+	}, opt)
+	if err != nil {
+		t.Errorf("gRPClient return an error: %s", err)
+	}
+	if len(rpl.GetHops()) == 0 {
+		t.Errorf("No hops returned")
+	}
+	var found bool
+	for _, v := range rpl.GetHops() {
+		if v.AssociatedData != nil {
+			found = true
+		}
+	}
+	assert.True(t, found, "Should have at least one route with associated data.")
 }
 
 func TestMain(m *testing.M) {
