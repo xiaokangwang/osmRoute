@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path"
+	"strconv"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -66,6 +67,30 @@ func TestRouteReturnAttrib(t *testing.T) {
 	for _, v := range rpl.GetHops() {
 		if v.AssociatedData != nil {
 			found = true
+			if methodValue, ok := v.AssociatedData["method"]; ok {
+				switch methodValue {
+				case "car":
+					fallthrough
+				case "public":
+					fallthrough
+				case "bus":
+					fallthrough
+				case "bike":
+					break
+				default:
+					t.Error("a unrecognized value is set to method")
+				}
+			}
+			if methodValue, ok := v.AssociatedData["co2_footprint"]; ok {
+				if _, err := strconv.ParseFloat(methodValue, 64); err != nil {
+					t.Error(err)
+				}
+			}
+			if methodValue, ok := v.AssociatedData["time_saved_for_humanity"]; ok {
+				if _, err := strconv.ParseFloat(methodValue, 64); err != nil {
+					t.Error(err)
+				}
+			}
 		}
 	}
 	assert.True(t, found, "Should have at least one route with associated data.")
